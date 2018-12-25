@@ -1,0 +1,16 @@
+//
+//  ViewController.h
+//  testIMSDK
+//
+//  Created by HCF on 15/10/21.
+//  Copyright (c) 2015年 HCF. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+
+@interface ViewController : UIViewController
+
+@end
+
+
+
