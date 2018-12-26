@@ -1,0 +1,90 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    >
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/gl_surface_local"
+        android:layout_height="160dp"
+        android:layout_width="100dp"
+        android:layout_alignParentRight="true"
+        android:layout_marginTop="64dp"
+        android:layout_marginRight="32dp"
+        />
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/gl_surface"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent" />
+    <TextView
+        android:id="@+id/chat_video_tv_title"
+        android:layout_marginTop="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="等待客服接受邀请"
+        android:textColor="@color/all_white"
+        android:textSize="20sp"
+        android:gravity="center_horizontal"
+        />
+
+    <RelativeLayout
+        android:id="@+id/chat_video_rl"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <RelativeLayout
+            android:id="@+id/chat_video_rl_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal">
+            <TextView
+                android:layout_marginBottom="16dp"
+                android:id="@+id/chat_video_tv_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="通话时长:"
+                android:textColor="@color/all_white"
+                android:textSize="16sp"/>
+
+            <Chronometer
+                android:layout_marginBottom="16dp"
+                android:layout_toRightOf="@id/chat_video_tv_time"
+                android:id="@+id/chat_video_chr"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/all_white"/>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_below="@id/chat_video_rl_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            >
+            <ImageView
+                android:id="@+id/chat_video_iv_endcall"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:src="@drawable/kf_end_call"
+                android:scaleType="fitXY"
+                android:onClick="hangup"
+                android:layout_centerInParent="true"
+                />
+            <ImageView
+                android:id="@+id/chat_video_iv_switch"
+                android:layout_toRightOf="@id/chat_video_iv_endcall"
+                android:layout_marginLeft="32dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/kf_camera_switch"
+                android:scaleType="fitXY"
+                android:onClick="switchCamera"
+                android:layout_centerVertical="true"
+                />
+        </RelativeLayout>
+
+
+    </RelativeLayout>
+
+</RelativeLayout>

@@ -1,0 +1,61 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    >
+
+    <ImageView
+        android:layout_width="225dp"
+        android:layout_height="250dp"
+        android:background="@drawable/kf_main_background"
+        android:layout_marginTop="20dp"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="好客服  用七陌"
+        android:textSize="26sp"
+        android:layout_marginTop="25dp"
+        android:textColor="#222222"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="即时联系在线客服"
+        android:textSize="16sp"
+        android:layout_marginTop="12dp"
+        android:textColor="#626465"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="视频、语音、文字、表情、图片、文件"
+        android:textSize="16sp"
+        android:layout_marginTop="3dp"
+        android:textColor="#626465"
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="通通不是事儿！"
+        android:textSize="16sp"
+        android:layout_marginTop="3dp"
+        android:textColor="#626465"
+        />
+
+    <Button
+
+        android:id="@+id/button"
+        android:layout_width="150dp"
+        android:layout_height="40dp"
+        android:text="联系客服"
+        android:background="@drawable/kf_icon_main_button"
+        android:layout_marginBottom="60dp"
+        android:textColor="#3ABEFF"
+        android:textSize="16sp"
+        android:layout_marginTop="60dp"
+        />
+
+</LinearLayout>
