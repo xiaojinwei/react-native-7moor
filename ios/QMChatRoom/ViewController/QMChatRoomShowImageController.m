@@ -9,7 +9,6 @@
 #import "QMChatRoomShowImageController.h"
 #import "SMUIImage+GIF.h"
 #import "SMUIImageView+WebCache.h"
-
 @interface QMChatRoomShowImageController () <UIAlertViewDelegate,UINavigationControllerDelegate>
 
 @end

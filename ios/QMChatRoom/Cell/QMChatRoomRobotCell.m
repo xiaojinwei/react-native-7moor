@@ -8,13 +8,12 @@
 
 #import "QMChatRoomRobotCell.h"
 #import "QMChatRoomRobotReplyView.h"
-#import <QMChatSDK/QMChatSDK.h>
+#import <QMLineSDK/QMLineSDK.h>
 #import "QMTextModel.h"
 #import "QMTapGestureRecognizer.h"
 #import "QMChatRoomShowImageController.h"
 #import "SMUIImage+GIF.h"
 #import "SMUIImageView+WebCache.h"
-
 @interface QMChatRoomRobotCell() <MLEmojiLabelDelegate>
 
 @end

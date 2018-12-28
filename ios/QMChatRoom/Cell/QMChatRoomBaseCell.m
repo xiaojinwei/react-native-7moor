@@ -9,7 +9,6 @@
 #import "QMChatRoomBaseCell.h"
 #import "SMUIImage+GIF.h"
 #import "SMUIImageView+WebCache.h"
-
 #define kIconImageViewWidth 45
 
 @implementation QMChatRoomBaseCell

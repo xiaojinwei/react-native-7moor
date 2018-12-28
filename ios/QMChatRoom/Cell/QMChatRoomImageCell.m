@@ -9,10 +9,9 @@
 #import "QMChatRoomImageCell.h"
 #import "QMTapGestureRecognizer.h"
 #import "QMChatRoomShowImageController.h"
-#import <QMChatSDK/QMChatSDK.h>
+#import <QMLineSDK/QMLineSDK.h>
 #import "SMUIImage+GIF.h"
 #import "SMUIImageView+WebCache.h"
-
 /**
     图片消息
  */

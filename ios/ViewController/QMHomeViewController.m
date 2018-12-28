@@ -8,8 +8,7 @@
 
 #import "QMHomeViewController.h"
 #import "QMChatRoomViewController.h"
-#import <QMChatSDK/QMChatSDK.h>
-#import <QMChatSDK/QMChatSDK-Swift.h>
+#import <QMLineSDK/QMLineSDK.h>
 
 #import "QMChatRoomGuestBookViewController.h"
 #import "QMAlert.h"
@@ -77,12 +76,11 @@
                 }
             });
         } failBlock:^{
-
+            [self getPeers];
         }];
     }
     
     [QMManager defaultManager].selectedPush = NO;
-
 
 }
 
@@ -169,7 +167,7 @@
      以上3个都是必填项
      */
 
-    [QMConnect registerSDKWithAppKey:@"5c10e000-042d-11e9-a401-6f2189532759" userName:@"mama" userId:@"123"];
+    [QMConnect registerSDKWithAppKey:@"5c10e000-042d-11e9-a401-6f2189532759" userName:@"asdadw" userId:@"234123"];
 }
 
 #pragma mark - 技能组选择

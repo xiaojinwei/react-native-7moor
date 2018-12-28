@@ -9,7 +9,6 @@
 #import "QMChatRoomCardCell.h"
 #import "SMUIImage+GIF.h"
 #import "SMUIImageView+WebCache.h"
-
 @interface QMChatRoomCardCell()
 
 @end

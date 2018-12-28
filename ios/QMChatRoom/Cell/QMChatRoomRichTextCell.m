@@ -11,7 +11,6 @@
 #import "QMAlert.h"
 #import "SMUIImage+GIF.h"
 #import "SMUIImageView+WebCache.h"
-
 /**
  富文本消息
  */

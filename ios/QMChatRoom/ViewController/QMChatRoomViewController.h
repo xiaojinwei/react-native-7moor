@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <QMLineSDK/QMLineSDK.h>
 
 @class QMChatRoomInputView;
 @class TCMessageManagerFaceView;
@@ -63,6 +64,10 @@
 @property (nonatomic, copy) NSString *leaveMsg; // 留言提示语 后台未配置显示默认
 
 @property (nonatomic, assign) BOOL isPush; // 判断是否为正常页面跳转
+
+@property (nonatomic, strong) QMEvaluation *evaluation;//满意度
+
+@property (nonatomic, strong) QMEvaluats *evaluats;//满意度评价详情
 
 @property (nonatomic, strong) NSMutableDictionary *heightCaches; // cell高度缓存
 

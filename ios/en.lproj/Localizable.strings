@@ -22,6 +22,10 @@
 
 "button.chat_evaluate" = "evaluation";
 
+"button.chat_title" = "Thank you for using our service. Please evaluate this service.";
+
+"button.chat_thank" = "Thank you for your comments on this service. I wish you a happy life. Goodbye!";
+
 "button.complete" = "finish";
 
 "button.back" = "back";
@@ -88,7 +92,7 @@
 
 "title.speakS" = "Talking too short";
 
-"title.voiceL" = "Talking too long";
+"title.apeakL" = "Talking too long";
 
 "title.schedule_faile" = "Other seat mandate failed";
 
@@ -103,6 +107,8 @@
 "title.iknow" = "I got it!";
 
 "title.messageBoard" = "Message Board";
+
+"title.messageHeader" = "Please leave a message. We will contact you as soon as possible.";
 
 "title.pleaseLeave" = "Please leave message ~";
 

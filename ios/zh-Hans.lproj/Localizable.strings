@@ -22,6 +22,10 @@
 
 "button.chat_evaluate" = "评价";
 
+"button.chat_title" = "感谢您使用我们的服务，请为此次服务进行评价!";
+
+"button.chat_thank" = "感谢您对本次服务做出评价，祝您生活愉快，再见!";
+
 "button.complete" = "完成";
 
 "button.back" = "返回";
@@ -88,7 +92,7 @@
 
 "title.speakS" = "说话时间太短";
 
-"title.voiceL" = "说话时间太长";
+"title.speakL" = "说话时间太长";
 
 "title.schedule_faile" = "其他坐席授权失败";
 
@@ -103,6 +107,8 @@
 "title.iknow" = "我知道了";
 
 "title.messageBoard" = "留言板";
+
+"title.messageHeader" = "请留言，我们将尽快联系您";
 
 "title.pleaseLeave" = "请留言~";
 

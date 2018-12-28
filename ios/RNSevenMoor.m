@@ -2,14 +2,11 @@
 #import "RNSevenMoor.h"
 
 #import "QMChatRoomViewController.h"
-#import <QMChatSDK/QMChatSDK.h>
-#import <QMChatSDK/QMChatSDK-Swift.h>
+#import <QMLineSDK/QMLineSDK.h>
 
 #import "QMChatRoomGuestBookViewController.h"
 #import "QMAlert.h"
 #import "QMManager.h"
-static NSString * const DidReceiveMessage = @"DidReceiveMessage";
-static NSString * const DidOpenMessage = @"DidOpenMessage";
 static RNSevenMoor *_instance = nil;
 @interface RNSevenMoor ()
 @property (nonatomic, assign) BOOL isPushed;
@@ -36,7 +33,6 @@ static RNSevenMoor *_instance = nil;
             _instance = [super allocWithZone:zone];
             [[NSNotificationCenter defaultCenter]addObserver:_instance selector:@selector(registerSuccess:) name:CUSTOM_LOGIN_SUCCEED object:nil];
             [[NSNotificationCenter defaultCenter]addObserver:_instance selector:@selector(registerFailure:) name:CUSTOM_LOGIN_ERROR_USER object:nil];
-
             
         }
     });
@@ -70,10 +66,13 @@ static RNSevenMoor *_instance = nil;
                 }
             });
         } failBlock:^{
-            
+            [self getPeers];
         }];
     }
+    
     [QMManager defaultManager].selectedPush = NO;
+    
+    
 }
 #pragma mark - 技能组选择
 - (void)getPeers {
@@ -133,7 +132,8 @@ static RNSevenMoor *_instance = nil;
     [presentingViewController presentViewController:alertController animated:YES completion:nil];
 }
 - (void)registerFailure:(NSNotification *)sender {
-    NSLog(@"注册失败::%@", sender.object);
+    
+    NSLog(@"注册失败::%@", [(QMLineError *)sender.object errorDesc]);
     self.isConnecting = NO;
 }
 #pragma mark - 跳转聊天界面
@@ -165,7 +165,8 @@ static RNSevenMoor *_instance = nil;
 RCT_EXPORT_MODULE()
 RCT_EXPORT_METHOD(registerSDK:(NSString *)key userName:(NSString *)userName userId:(NSString *)userId){
     [RNSevenMoor sharedInstance];
-     [QMConnect registerSDKWithAppKey:key userName:userName userId:userId];
+    [QMConnect registerSDKWithAppKey:key userName:userName userId:userId];
+    
 }
 @end
   

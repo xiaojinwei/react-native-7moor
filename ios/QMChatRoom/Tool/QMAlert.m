@@ -48,7 +48,7 @@
     label.backgroundColor = [UIColor clearColor];
     label.font = [UIFont systemFontOfSize:14];
     [showview addSubview:label];
-    showview.frame = CGRectMake((kScreenWidth - LabelSize.width - 20)/2, kScreenHeight - label.frame.size.height - 80, LabelSize.width + 20, LabelSize.height + 10);
+    showview.frame = CGRectMake((kScreenWidth - LabelSize.width - 20)/2, kScreenHeight - label.frame.size.height - 180, LabelSize.width + 20, LabelSize.height + 10);
     [UIView animateWithDuration:5 animations:^{
         showview.alpha = 0;
     } completion:^(BOOL finished) {
