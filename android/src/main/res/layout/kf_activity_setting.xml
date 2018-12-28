@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <EditText
+        android:layout_margin="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="输入accessId"
+        android:text="1cf5bdb0-c66d-11e5-9875-63635d52845f"
+        android:id="@+id/et_accessId"
+        />
+    <EditText
+        android:layout_margin="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="输入name"
+        android:id="@+id/et_name"
+        android:text="正式环境测试号0801"
+        />
+    <EditText
+        android:layout_margin="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="输入userId"
+        android:id="@+id/et_userId"
+        android:text="8888"
+        />
+    <EditText
+        android:layout_margin="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="输入tcp_ip"
+        android:id="@+id/et_tcp_ip"
+        android:text="115.29.190.253"
+        />
+    <EditText
+        android:layout_margin="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="输入http_ip"
+        android:id="@+id/et_http_ip"
+        android:text="http://115.29.190.253:4999/sdkChat"
+        />
+
+    <Button
+        android:layout_margin="16dp"
+        android:id="@+id/btn_save"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="保存"/>
+
+
+</LinearLayout>
