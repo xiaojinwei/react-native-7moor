@@ -6,4 +6,7 @@ export default class RNSevenMoorModule {
     static registerSDK(key,userName,userId,cb) {
         RNSevenMoor.registerSDK(key,userName,userId)
     }
+    static sdkGetUnReadMessage(key,userName,userId,cb) {
+        RNSevenMoor.registerSDK(key,userName,userId)
+    }
 }

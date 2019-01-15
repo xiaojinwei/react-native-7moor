@@ -168,5 +168,18 @@ RCT_EXPORT_METHOD(registerSDK:(NSString *)key userName:(NSString *)userName user
     [QMConnect registerSDKWithAppKey:key userName:userName userId:userId];
     
 }
+RCT_EXPORT_METHOD(sdkGetUnReadMessage:(NSString *)key
+                  userName:(NSString *)userName
+                  userId:(NSString *)userId
+                  resolve:(RCTPromiseResolveBlock)resolve
+                  reject:(RCTPromiseRejectBlock)reject){
+    [RNSevenMoor sharedInstance];
+    [QMConnect sdkGetUnReadMessage:key userName:userName userId:userId successBlock:^(NSInteger number) {
+        resolve([NSNumber numberWithInteger:number]);
+    } failBlock:^{
+        reject([@(1) stringValue], @"获取未读消息失败",NULL);
+    }];
+    
+}
 @end
   
