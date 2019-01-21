@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.widget.Toast;
 
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -14,6 +15,7 @@ import com.facebook.react.bridge.Callback;
 import com.m7.imkfsdk.KfStartHelper;
 import com.m7.imkfsdk.MainActivity;
 import com.m7.imkfsdk.utils.PermissionUtils;
+import com.moor.imkf.IMChatManager;
 
 public class RNSevenMoorModule extends ReactContextBaseJavaModule {
 
@@ -55,6 +57,19 @@ public class RNSevenMoorModule extends ReactContextBaseJavaModule {
                     }, 2000);
                 }
             });
+        }
+    }
+    @ReactMethod
+    public void sdkGetUnReadMessage(String key, String userName, String userId, final Promise promise) {
+        try {
+            final KfStartHelper helper = new KfStartHelper(reactContext.getCurrentActivity());
+            helper.setSaveMsgType(1);
+            helper.initSdkChat(key, userName, userId);
+            int unReadCount = IMChatManager.getInstance().getMsgUnReadCount();
+            promise.resolve(unReadCount);
+
+        } catch (Exception e) {
+            promise.reject("1", e.getMessage());
         }
     }
 }
