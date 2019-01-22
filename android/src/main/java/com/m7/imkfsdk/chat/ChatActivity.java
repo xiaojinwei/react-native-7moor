@@ -188,7 +188,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
             }
             if (msg.what == HANDLER_ROBOT) {
                 //当前是机器人
-                Toast.makeText(getApplicationContext(), "当前是机器人为你服务", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(getApplicationContext(), "当前是机器人为你服务", Toast.LENGTH_SHORT).show();
                 chat_tv_convert.setVisibility(View.VISIBLE);
                 if (IMChatManager.getInstance().isShowTransferBtn()) {
                     chat_tv_convert.setVisibility(View.VISIBLE);

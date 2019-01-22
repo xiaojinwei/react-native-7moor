@@ -62,9 +62,12 @@ public class RNSevenMoorModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void sdkGetUnReadMessage(String key, String userName, String userId, final Promise promise) {
         try {
+
+
+
             final KfStartHelper helper = new KfStartHelper(reactContext.getCurrentActivity());
             helper.setSaveMsgType(1);
-            helper.initSdkChat(key, userName, userId);
+            helper.startKFService(key, userName, userId);
             int unReadCount = IMChatManager.getInstance().getMsgUnReadCount();
             promise.resolve(unReadCount);
 

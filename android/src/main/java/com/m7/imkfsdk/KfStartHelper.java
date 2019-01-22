@@ -218,6 +218,28 @@ public class KfStartHelper {
             }
         }.start();
     }
+    public void startKFService(final String accessId,final String userName,
+                               final String userId) {
+        this.accessId = accessId;
+        this.userName = userName;
+        this.userId = userId;
+        new Thread() {
+            @Override
+            public void run() {
+                IMChatManager.getInstance().setOnInitListener(new InitListener() {
+                    @Override
+                    public void oninitSuccess() {
+                    }
+
+                    @Override
+                    public void onInitFailed() {
+                        ToastUtils.showShort(R.string.sdkinitwrong);
+                    }
+                });
+                IMChatManager.getInstance().init(context, receiverAction, accessId, userName, userId);
+            }
+        }.start();
+    }
 
     public void startPeersDialog(final List<Peer> peers, final CardInfo mCardInfo) {
         final String[] items = new String[peers.size()];
