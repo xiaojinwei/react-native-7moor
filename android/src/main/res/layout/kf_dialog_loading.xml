@@ -21,7 +21,7 @@
             android:layout_width="30.0dip"
             android:layout_height="30.0dip"
             android:layout_gravity="center"
-            android:layout_marginBottom="6.0dip"
+            android:layout_marginBottom="10.0dip"
             android:clickable="false"
             android:gravity="center"
             android:indeterminateTint="#ff9000"/>
@@ -34,7 +34,7 @@
             android:gravity="center"
             android:lineSpacingExtra="3.0dip"
             android:textColor="#ffffffff"
-            android:textSize="17.0sp" />
+            android:textSize="14.0sp" />
     </LinearLayout>
 
 </RelativeLayout>
