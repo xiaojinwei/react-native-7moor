@@ -4,7 +4,7 @@ import {DeviceEventEmitter, NativeAppEventEmitter, NativeModules, Platform} from
 const { RNSevenMoor } = NativeModules;
 export default class RNSevenMoorModule {
     static registerSDK(key,userName,userId,cb) {
-        RNSevenMoor.registerSDK(key,userName,userId)
+        RNSevenMoor.registerSDK(key,!!userName?userName:'游客',userId)
     }
 
     /***
@@ -15,6 +15,6 @@ export default class RNSevenMoorModule {
      * @returns {*}
      */
     static sdkGetUnReadMessage(key,userName,userId) {
-        return RNSevenMoor.sdkGetUnReadMessage(key,userName,userId)
+        return RNSevenMoor.sdkGetUnReadMessage(key,!!userName?userName:'游客',userId)
     }
 }
