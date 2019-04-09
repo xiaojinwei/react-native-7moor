@@ -99,3 +99,8 @@ FOUNDATION_EXPORT const unsigned char QMLineSDKVersionString[];
  * 撤回消息
  */
 #define CUSTOMSRV_DRAWMESSAGE @"drawmessage"
+
+/**
+ * 小陌机器人满意度评价通知
+ */
+#define CUSTOMSRV_SATISFACTION @"satisfaction"

@@ -26,4 +26,6 @@
 
 @property (nonatomic, copy) NSString * value;
 
+@property (nonatomic, copy) NSArray * reason;
+
 @end

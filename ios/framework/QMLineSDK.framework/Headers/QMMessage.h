@@ -264,6 +264,11 @@ typedef enum: NSInteger {
 @property (nonatomic, copy)NSString *robotType;
 
 /**
+ 机器人回复语id
+ */
+@property (nonatomic, copy)NSString *robotMsgId;
+
+/**
  富文本消息
  */
 @property (nonatomic, strong)CustomRichText *richText;

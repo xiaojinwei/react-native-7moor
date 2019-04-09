@@ -12,17 +12,17 @@
  当前客服状态
  */
 typedef enum: NSInteger {
-    QMKStatusRobot = 0,
+    QMKStatusRobot = 0, // 机器人
     
-    QMKStatusOnline = 1,
+    QMKStatusOnline = 1, // 坐席在线
     
-    QMKStatusOffline = 2,
+    QMKStatusOffline = 2, // 坐席离线
     
-    QMKStatusClaim = 3,
+    QMKStatusClaim = 3, // 会话被领取
     
-    QMKStatusFinish = 4,
+    QMKStatusFinish = 4, // 会话被结束
     
-    QMKStatusVip = 5,
+    QMKStatusVip = 5, // vip专属坐席
 }QMKStatus;
 
 #pragma mark -- 坐席信息 --

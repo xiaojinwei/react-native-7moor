@@ -466,6 +466,21 @@
                    failBlock:(void (^)(void))failure;
 
 /**
+ 提交满意度评价 包含二级n标题和备注
+ 
+ param name:          评价信息
+ param value:         评价信息ID
+ param successBlock:  成功回调
+ param failBlock:     失败回调
+ */
++ (void)sdkNewSubmitInvestigate:(NSString *)name
+                          value:(NSString *)value
+                     radioValue:(NSArray *)radioValue
+                         remark:(NSString *)remark
+                   successBlock:(void (^)(void))success
+                      failBlock:(void (^)(void))failure;
+
+/**
  留言接口
  
  客服离线状态下，未配置机器人客服或转人工客服时，可进行留言操作
@@ -519,8 +534,22 @@
                      messageId:(NSString *)messageId
                      robotType:(NSString *)robotType
                        robotId:(NSString *)robotId
+                    robotMsgId:(NSString *)robotMsgId
                   successBlock:(void (^)(void))success
                      failBlock:(void (^)(void))failure;
+
+/**
+ 智能机器人评价
+ 
+ param robotId:          机器人id
+ param satisfaction:     评价选项
+ param successBlock:  成功回调
+ param failBlock:     失败回调
+ */
++ (void)sdkSubmitIntelligentRobotSatisfaction:(NSString *)robotId
+                                 satisfaction:(NSString *)satisfaction
+                                 successBlock:(void (^)(void))success
+                                    failBlock:(void (^)(void))failure;
 
 /**
  是否启用留言功能
@@ -606,6 +635,17 @@
 + (BOOL)manualButtonStatus;
 
 /**
+ 与服务器连接状态
+
+ @param connected 已连接
+ @param connecting 连接中/重连中
+ @param disconnect 断开连接
+ */
++ (void)statusWithConneted:(void (^)(void))connected
+                connecting:(void (^)(void))connecting
+                       dis:(void (^)(void))disconnect;
+
+/**
  会话定时断开
  调用此接口、可以再客户在一定时间没有新消息的时候断开会话
  
@@ -615,5 +655,9 @@
 + (void)sdkChatTimerBreaking:(void (^)(NSDictionary *))success
                    failBlock:(void (^)(void))failure;
 
+/**
+ 排队数提示文案
+ */
++ (NSArray *)sdkQueueMessage;
 
 @end
