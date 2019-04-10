@@ -51,7 +51,7 @@
 #import "QMManager.h"
 
 /**
-    在线客服聊天界面
+ 在线客服聊天界面
  */
 @interface QMChatRoomViewController ()<UITableViewDataSource, UITableViewDelegate, UITextViewDelegate, TCMessageManagerFaceViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIAlertViewDelegate, AVAudioRecorderDelegate, QMKServiceDelegate, QMAudioRecorderDelegate> {
     
@@ -117,7 +117,7 @@
  
  peer: 技能组id 必传
  params: @{@"agent":@"8000"} 专属坐席
-         @{@"customField":@{@"姓名":@"李三"}} 自定义字段
+ @{@"customField":@{@"姓名":@"李三"}} 自定义字段
  */
 - (void)viewDidAppear:(BOOL)animated {
     if (self.isPush == NO) {
@@ -149,30 +149,30 @@
             NSLog(@"sdk走技能组方法");
             
             [QMConnect sdkBeginNewChatSession:self.peerId params:@{@"customField":@{@"扩展信息key":@"扩展信息value"},@"agent":@"0000"} successBlock:^(BOOL remark) {
-            NSLog(@"开始会话成功");
-            dispatch_async(dispatch_get_main_queue(), ^{
-                // 是否启动了评价功能
-                if (remark == NO) {
-                    myChatView.addView.evaluateBtn.hidden = YES;
-                    myChatView.addView.evaluateLabel.hidden = YES;
-                }else {
-                    myChatView.addView.evaluateBtn.hidden = NO;
-                    myChatView.addView.evaluateLabel.hidden = NO;
-                }
-                if (self.isRobot) {
-                    if ([QMConnect manualButtonStatus]) {
-                        self.manualButotn.hidden = NO;
-                    } else {
+                NSLog(@"开始会话成功");
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    // 是否启动了评价功能
+                    if (remark == NO) {
+                        myChatView.addView.evaluateBtn.hidden = YES;
+                        myChatView.addView.evaluateLabel.hidden = YES;
+                    }else {
+                        myChatView.addView.evaluateBtn.hidden = NO;
+                        myChatView.addView.evaluateLabel.hidden = NO;
+                    }
+                    if (self.isRobot) {
+                        if ([QMConnect manualButtonStatus]) {
+                            self.manualButotn.hidden = NO;
+                        } else {
+                            self.manualButotn.hidden = YES;
+                        }
+                    }else{
                         self.manualButotn.hidden = YES;
                     }
-                }else{
-                    self.manualButotn.hidden = YES;
-                }
-            });
-        } failBlock:^{
-            NSLog(@"开始会话失败");
-        }];
-        
+                });
+            } failBlock:^{
+                NSLog(@"开始会话失败");
+            }];
+            
         }
         self.isPush = YES;
     }
@@ -191,7 +191,7 @@
      */
     QMProfileManager *manger = [QMProfileManager sharedInstance];
     [manger loadProfile:@"name" password:@"123456"];
-
+    
     // 网络监控
     Reachability *hostReach = [Reachability reachabilityForInternetConnection];
     hostReach.reachableBlock = ^(Reachability *reachability) {
@@ -216,7 +216,7 @@
     }
     
     [self getData];
-
+    
     [self.chatTableView reloadData];
     dispatch_async(dispatch_get_main_queue(), ^{
         [self scrollToEnd];
@@ -317,7 +317,7 @@
             self.isRobot = false;
         }
     }
-
+    
     // 注销
     self.logoutButton = [UIButton buttonWithType:UIButtonTypeSystem];
     self.logoutButton.frame = CGRectMake(0, 0, 50, 30);
@@ -387,7 +387,7 @@
 }
 
 /**
-  新消息通知、发送和接收的消息 都会走这个通知 统一刷新聊天界面
+ 新消息通知、发送和接收的消息 都会走这个通知 统一刷新聊天界面
  */
 - (void)getNewReload: (NSNotification *)sender {
     NSLog(@"获取到新消息 %@", sender.object);
@@ -500,7 +500,7 @@
     }
     
     cell.selectionStyle = UITableViewCellSelectionStyleNone;
-        
+    
     // 如果需要设置头像、该方法加上一个头像路径参数
     [cell setData:message avater:self.avaterStr];
     
@@ -530,7 +530,7 @@
                 if ([weakSelf.heightCaches objectForKey:message._id]) {
                     [weakSelf.heightCaches removeObjectForKey:message._id];
                 }
-                [weakSelf sendRobotFeedback:isUseful questionId:message.questionId messageId:message._id robotType:message.robotType robotId:message.robotId];
+                [weakSelf sendRobotFeedback:isUseful questionId:message.questionId messageId:message._id robotType:message.robotType robotId:message.robotId robotMsgId:message.robotMsgId];
             }
         };
     }
@@ -573,7 +573,7 @@
             CGFloat textHeight = [QMTextModel calcTextHeight:message.message];
             height += (textHeight+5+21);
         }
-            
+        
         height = height>65?height:65;
         if ([message.isRobot isEqualToString:@"1"] && ![message.questionId isEqualToString:@""]) {
             if (message.isUseful) {
@@ -791,8 +791,8 @@
 
 // 获取文件
 - (void)takeFileBtnAction {
-//    QMFileManagerController * fileViewController = [[QMFileManagerController alloc] init];
-//    [self.navigationController pushViewController:fileViewController animated:true];
+    //    QMFileManagerController * fileViewController = [[QMFileManagerController alloc] init];
+    //    [self.navigationController pushViewController:fileViewController animated:true];
     
     [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -828,7 +828,7 @@
             }
         });
     }];
-
+    
 }
 
 // 满意度评价
@@ -990,9 +990,9 @@
 }
 
 // 机器人帮助评价
-- (void)sendRobotFeedback: (BOOL)isUseful questionId: (NSString *)questionId messageId: (NSString *)messageId robotType: (NSString *)robotType robotId: (NSString *)robotId {
+- (void)sendRobotFeedback: (BOOL)isUseful questionId: (NSString *)questionId messageId: (NSString *)messageId robotType: (NSString *)robotType robotId: (NSString *)robotId robotMsgId:(NSString *)robotMsgId {
     __weak QMChatRoomViewController *weakSelf = self;
-    [QMConnect sdkSubmitRobotFeedback:isUseful questionId:questionId messageId:messageId robotType:robotType robotId:robotId successBlock:^{
+    [QMConnect sdkSubmitRobotFeedback:isUseful questionId:questionId messageId:messageId robotType:robotType robotId:robotId robotMsgId:robotMsgId successBlock:^{
         dispatch_async(dispatch_get_main_queue(), ^{
             [weakSelf getData];
             [weakSelf.chatTableView reloadData];
@@ -1015,7 +1015,7 @@
 - (void)customClick {
     [QMConnect sdkConvertManual:^{
         NSLog(@"转人工客服成功");
-//        [self insertCardInfoMessage];
+        //        [self insertCardInfoMessage];
     } failBlock:^{
         NSLog(@"转人工客服失败");
         dispatch_async(dispatch_get_main_queue(), ^{
@@ -1036,7 +1036,7 @@
     if ([self.msg isEqualToString:@""]) {
         self.msg = NSLocalizedString(@"title.messageprompts", nil);
     }
-
+    
     if ([QMConnect allowedLeaveMessage]) {
         UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"" message: self.msg preferredStyle:UIAlertControllerStyleAlert];
         UIAlertAction *sureAction = [UIAlertAction actionWithTitle:NSLocalizedString(@"button.leaveMessage", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
@@ -1053,7 +1053,7 @@
     }else {
         UIAlertController *alertView = [UIAlertController alertControllerWithTitle:@"" message: self.msg preferredStyle:UIAlertControllerStyleAlert];
         UIAlertAction *cancel = [UIAlertAction actionWithTitle:NSLocalizedString(@"title.iknow", nil) style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
-        
+            
         }];
         [alertView addAction:cancel];
         [self presentViewController:alertView animated:YES completion:nil];
@@ -1121,7 +1121,7 @@
     
     [alertController addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"button.cancel", nil) style:UIAlertActionStyleDestructive handler:nil]];
     [self presentViewController:alertController animated:true completion:nil];
-
+    
 }
 
 #pragma mark - Push Notification
@@ -1213,7 +1213,7 @@
     [alertController addAction:[UIAlertAction actionWithTitle:NSLocalizedString(@"button.cancel", nil) style:UIAlertActionStyleDestructive handler:nil]];
     [self presentViewController:alertController animated:true completion:nil];
     
-
+    
 }
 
 // 坐席信息 (坐席工号、坐席名称、坐席头像) 可能为空字符串需要判断
@@ -1322,15 +1322,15 @@
 // 访客无响应断开计时(开启无响应断开的需要把方法中的代码放开)
 - (void)createNSTimer{
     NSLog(@"开启无响应定时器");
-//    [self removeTimer];
-//    self.breakDuration = [QMConnect breakSessionDuration];
-//    self.breakTipsDuration = [QMConnect breakSessionAlertDuration];
-//    if (self.breakDuration && self.breakTipsDuration && [QMConnect allowedBreakSession]) {
-//        breakTipTimer = [NSTimer scheduledTimerWithTimeInterval:self.breakTipsDuration * 60 target:self selector:@selector(breakTipTimerAction:) userInfo:nil repeats:NO];
-//        breakTimer = [NSTimer scheduledTimerWithTimeInterval:self.breakDuration * 60 target:self selector:@selector(breakTimerAction:) userInfo:nil repeats:NO];
-//        [[NSRunLoop mainRunLoop] addTimer:breakTimer forMode:NSRunLoopCommonModes];
-//        [[NSRunLoop mainRunLoop] addTimer:breakTipTimer forMode:NSRunLoopCommonModes];
-//    }
+    //    [self removeTimer];
+    //    self.breakDuration = [QMConnect breakSessionDuration];
+    //    self.breakTipsDuration = [QMConnect breakSessionAlertDuration];
+    //    if (self.breakDuration && self.breakTipsDuration && [QMConnect allowedBreakSession]) {
+    //        breakTipTimer = [NSTimer scheduledTimerWithTimeInterval:self.breakTipsDuration * 60 target:self selector:@selector(breakTipTimerAction:) userInfo:nil repeats:NO];
+    //        breakTimer = [NSTimer scheduledTimerWithTimeInterval:self.breakDuration * 60 target:self selector:@selector(breakTimerAction:) userInfo:nil repeats:NO];
+    //        [[NSRunLoop mainRunLoop] addTimer:breakTimer forMode:NSRunLoopCommonModes];
+    //        [[NSRunLoop mainRunLoop] addTimer:breakTipTimer forMode:NSRunLoopCommonModes];
+    //    }
 }
 
 - (void)removeTimer {
