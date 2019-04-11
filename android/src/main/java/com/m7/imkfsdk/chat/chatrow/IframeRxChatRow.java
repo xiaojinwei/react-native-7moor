@@ -1,13 +1,11 @@
 package com.m7.imkfsdk.chat.chatrow;
 
 import android.content.Context;
-import android.net.http.SslError;
 import android.os.Build;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
@@ -65,10 +63,10 @@ public class IframeRxChatRow extends BaseChatRow {
                         return true;
                     }
 
-                    @Override
-                    public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                        handler.proceed();
-                    }
+//                    @Override
+//                    public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+//                        handler.proceed();
+//                    }
                 });
 
                 holder.getWebView().setOnTouchListener(new View.OnTouchListener() {

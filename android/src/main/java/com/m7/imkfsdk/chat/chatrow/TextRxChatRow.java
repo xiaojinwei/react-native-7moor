@@ -134,7 +134,7 @@ public class TextRxChatRow extends BaseChatRow {
                             holder.chat_iv_robot_useless.setImageResource(R.drawable.kf_robot_useless_grey);
                             holder.chat_tv_robot_useless.setTextColor(context.getResources().getColor(R.color.grey));
                             holder.chat_rl_robot_result.setVisibility(View.VISIBLE);
-                            holder.chat_tv_robot_result.setText("多谢鼓励，我们再接再厉！");
+                            holder.chat_tv_robot_result.setText(R.string.thinks_01);
 
                         } else if ("useless".equals(NullUtil.checkNull(message.robotPingjia))) {
                             holder.chat_iv_robot_useful.setImageResource(R.drawable.kf_robot_useful_grey);
@@ -142,7 +142,7 @@ public class TextRxChatRow extends BaseChatRow {
                             holder.chat_iv_robot_useless.setImageResource(R.drawable.kf_robot_useless_blue);
                             holder.chat_tv_robot_useless.setTextColor(context.getResources().getColor(R.color.robot_blue));
                             holder.chat_rl_robot_result.setVisibility(View.VISIBLE);
-                            holder.chat_tv_robot_result.setText("感谢反馈，我们继续努力。");
+                            holder.chat_tv_robot_result.setText(R.string.thinks_02);
                         } else {
                             holder.chat_iv_robot_useful.setImageResource(R.drawable.kf_robot_useful_grey);
                             holder.chat_tv_robot_useful.setTextColor(context.getResources().getColor(R.color.grey));
@@ -157,7 +157,7 @@ public class TextRxChatRow extends BaseChatRow {
                                     ((ChatActivity) context).updateMessage();
 
                                     if (!"".equals(NullUtil.checkNull(detail.questionId))) {
-                                        IMChatManager.getInstance().sendRobotCsr(NullUtil.checkNull(detail.questionId), "useful");
+                                        IMChatManager.getInstance().sendRobotCsr(NullUtil.checkNull(detail.questionId), NullUtil.checkNull(detail.robotType), NullUtil.checkNull(detail.robotId),NullUtil.checkNull(detail.robotMsgId),  "useful");
                                     }
 
                                 }
@@ -171,7 +171,7 @@ public class TextRxChatRow extends BaseChatRow {
                                     ((ChatActivity) context).updateMessage();
 
                                     if (!"".equals(NullUtil.checkNull(detail.questionId))) {
-                                        IMChatManager.getInstance().sendRobotCsr(NullUtil.checkNull(detail.questionId), "useless");
+                                        IMChatManager.getInstance().sendRobotCsr(NullUtil.checkNull(detail.questionId), NullUtil.checkNull(detail.robotType), NullUtil.checkNull(detail.robotId), NullUtil.checkNull(detail.robotMsgId), "useless");
 
                                     }
                                 }
@@ -236,7 +236,7 @@ public class TextRxChatRow extends BaseChatRow {
 
 
         SpannableString spannableString = new SpannableString(msg);
-        Pattern patten = Pattern.compile("\\d+[：]\\w+\\n", Pattern.CASE_INSENSITIVE);
+        Pattern patten = Pattern.compile("\\d+[：].*+\\n", Pattern.CASE_INSENSITIVE);
         Matcher matcher = patten.matcher(spannableString);
         while (matcher.find()) {
             String number = matcher.group();
@@ -351,7 +351,7 @@ public class TextRxChatRow extends BaseChatRow {
         public void onClick(View view) {
             String msgStr = "";
             try {
-                msgStr = msg.split("：")[0];
+                msgStr = msg.split("：")[1].trim();
             } catch (Exception e) {
             }
             chatActivity.sendTextMsg(msgStr);
@@ -379,7 +379,7 @@ public class TextRxChatRow extends BaseChatRow {
                     context.startActivity(intent);
                 }
             } catch (Exception e) {
-                Toast.makeText(context, "链接不正确！", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, R.string.url_failure, Toast.LENGTH_SHORT).show();
             }
         }
     }

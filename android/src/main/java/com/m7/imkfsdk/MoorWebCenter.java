@@ -22,6 +22,7 @@ import android.widget.TextView;
 
 import com.m7.imkfsdk.utils.FileUtils2;
 import com.reactlibrary.R;
+
 import java.io.File;
 
 public class MoorWebCenter extends Activity {
@@ -118,7 +119,7 @@ public class MoorWebCenter extends Activity {
 			}
 		});
 		mWebView.setWebViewClient(new WebViewClient() {
-			Dialog progressDialog = ProgressDialog.show(MoorWebCenter.this, null, "正在加载，请稍后...");
+			Dialog progressDialog = ProgressDialog.show(MoorWebCenter.this, null, getString(R.string.reading));
 
 			public boolean shouldOverrideUrlLoading(WebView view, String url) {
 				Now_Url = url;
@@ -128,7 +129,7 @@ public class MoorWebCenter extends Activity {
 			}
 
 			public void onPageStarted(WebView view, String url,
-                                      Bitmap favicon) {
+									  Bitmap favicon) {
 				super.onPageStarted(view, url, favicon);
 
 				progressDialog.show();

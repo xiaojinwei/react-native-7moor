@@ -38,6 +38,7 @@ public class ImageRxChatRow extends BaseChatRow {
             }else {
                 holder.getWithdrawTextView().setVisibility(View.GONE);
                 holder.getContainer().setVisibility(View.VISIBLE);
+
                 message.message = message.message.replaceAll("https://","http://");
                 Glide.with(context).load(message.message+"?imageView2/0/w/200/h/140")
                         .centerCrop()

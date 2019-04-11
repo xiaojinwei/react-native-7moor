@@ -88,16 +88,13 @@ public class AudioManager {
 	}
 
 	public int getVoiceLevel(int maxLevel) {
-		if(isPrepared && mp3Recorder != null) {
-			long a =  maxLevel * mp3Recorder.getVolume();
-
-			//LogUtil.e("录音音量大小=====", a+"");
-			long b = a / 100;
-			int lev = (int)b + 1;
-			if(lev > maxLevel) {
-				lev = maxLevel;
+		if (isPrepared && mp3Recorder != null) {
+			int volume;
+			volume = maxLevel * mp3Recorder.getVolume() * mp3Recorder.getVolume() / 5000 + 1;
+			if (volume > 7) {
+				volume = 7;
 			}
-			return lev;
+			return volume;
 		}
 		return 1;
 	}

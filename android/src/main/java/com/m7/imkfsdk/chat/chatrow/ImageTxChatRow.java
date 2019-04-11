@@ -2,16 +2,21 @@ package com.m7.imkfsdk.chat.chatrow;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.View;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.target.SimpleTarget;
 import com.reactlibrary.R;
 import com.m7.imkfsdk.chat.ChatActivity;
 import com.m7.imkfsdk.chat.ImageViewLookActivity;
 import com.m7.imkfsdk.chat.holder.BaseHolder;
 import com.m7.imkfsdk.chat.holder.ImageViewHolder;
+import com.m7.imkfsdk.utils.ImageUtils;
 import com.moor.imkf.model.entity.FromToMessage;
 
 /**
@@ -31,13 +36,21 @@ public class ImageTxChatRow extends BaseChatRow {
 
     @Override
     protected void buildChattingData(final Context context, BaseHolder baseHolder, FromToMessage detail, int position) {
-        ImageViewHolder holder = (ImageViewHolder) baseHolder;
+        final ImageViewHolder holder = (ImageViewHolder) baseHolder;
         final FromToMessage message = detail;
         if(message != null) {
             Glide.with(context).load(message.filePath)
-                    .centerCrop()
-                    .crossFade()
-                    .into(holder.getImageView());
+                    .asBitmap()
+                    .placeholder(R.drawable.pic_thumb_bg)
+                    .error(R.drawable.image_download_fail_icon)
+                    .into(new SimpleTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                            final Bitmap bitmap_bg = BitmapFactory.decodeResource(context.getResources(), R.drawable.kf_chatto_bg_normal);
+                            Bitmap newBitmap = ImageUtils.getRoundCornerImage(bitmap_bg, resource);
+                            holder.getImageView().setImageBitmap(newBitmap);
+                        }
+                    });
             holder.getImageView().setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {

@@ -6,9 +6,7 @@ import android.content.res.XmlResourceParser;
 import android.text.TextUtils;
 
 import com.reactlibrary.R;
-
 import org.xmlpull.v1.XmlPullParserException;
-
 import java.io.IOException;
 
 public class MimeTypesTools {

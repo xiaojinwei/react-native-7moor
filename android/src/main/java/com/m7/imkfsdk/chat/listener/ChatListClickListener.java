@@ -12,14 +12,17 @@ import com.moor.imkf.model.entity.FromToMessage;
 /**
  * Created by longwei on 2016/3/10.
  */
-public class ChatListClickListener  implements View.OnClickListener{
+public class ChatListClickListener implements View.OnClickListener {
 
-    /**聊天界面*/
+    /**
+     * 聊天界面
+     */
     private ChatActivity mContext;
 
-    public ChatListClickListener(ChatActivity activity , String userName) {
+    public ChatListClickListener(ChatActivity activity, String userName) {
         mContext = activity;
     }
+
     @Override
     public void onClick(View v) {
         ViewHolderTag holder = (ViewHolderTag) v.getTag();
@@ -30,21 +33,21 @@ public class ChatListClickListener  implements View.OnClickListener{
                 mContext.resendMsg(iMessage, holder.position);
                 break;
             case ViewHolderTag.TagType.TAG_VOICE:
-                if(iMessage == null) {
-                    return ;
+                if (iMessage == null) {
+                    return;
                 }
                 MediaPlayTools instance = MediaPlayTools.getInstance();
                 final ChatAdapter adapterForce = mContext.getChatAdapter();
-                if(instance.isPlaying()) {
+                if (instance.isPlaying()) {
                     instance.stop();
                 }
-                if(adapterForce.mVoicePosition == holder.position) {
+                if (adapterForce.mVoicePosition == holder.position) {
                     adapterForce.mVoicePosition = -1;
                     adapterForce.notifyDataSetChanged();
-                    return ;
+                    return;
                 }
-                if (iMessage.unread != null && iMessage.unread.equals("1")) {
-                    iMessage.unread = "0";
+                if (iMessage.unread2 != null && iMessage.unread2.equals("1")) {
+                    iMessage.unread2 = "0";
                     holder.holder.voiceUnread.setVisibility(View.GONE);
                 }
                 MessageDao.getInstance().updateMsgToDao(iMessage);
@@ -62,7 +65,6 @@ public class ChatListClickListener  implements View.OnClickListener{
                 instance.playVoice(fileLocalPath, false);
                 adapterForce.setVoicePosition(holder.position);
                 adapterForce.notifyDataSetChanged();
-
                 break;
             case ViewHolderTag.TagType.TAG_SEND_MSG:
                 mContext.sendMsg(iMessage);

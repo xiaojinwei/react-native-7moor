@@ -10,34 +10,35 @@
         android:id="@+id/chat_title"
         android:layout_width="match_parent"
         android:layout_height="45dp"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:background="#F4F6F7"
-        >
+        android:background="#F4F6F7">
+
         <TextView
             android:id="@+id/chat_tv_back"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="返回"
-            android:textSize="16sp"
-            android:textColor="#0C6BFE"
-            android:layout_marginLeft="15dp"
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"
+            android:layout_marginLeft="15dp"
+            android:text="@string/logout"
+            android:textColor="#0C6BFE"
+            android:textSize="16sp"
             />
-        
+
         <TextView
             android:id="@+id/other_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:textColor="@color/all_black"
-            android:text=""
+            android:text="@string/wait_link"
             android:maxEms="14"
             android:maxLines="1"
             android:ellipsize="end"
             tools:text="容联七陌科技有限公司欢迎您使用在线客服"
-            android:textSize="14sp" />
-
+            android:textColor="@color/all_black"
+            android:textSize="14sp"/>
         <TextView
             android:id="@+id/chat_tv_convert"
             android:layout_width="wrap_content"
@@ -45,9 +46,9 @@
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
             android:layout_marginRight="15dp"
+            android:text="@string/topeople"
             android:textColor="#0C6BFE"
-            android:textSize="16sp"
-            android:text="转人工"/>
+            android:textSize="16sp"/>
 
     </RelativeLayout>
 
@@ -172,9 +173,9 @@
                 android:layout_height="32dp"
                 android:layout_marginRight="4dp"
                 android:background="@drawable/kf_chat_send_btn_selector"
-                android:text="发送"
+                android:text="@string/send"
                 android:textColor="#666666"
-                android:textSize="16sp"
+                android:textSize="14sp"
                 android:visibility="gone" />
         </LinearLayout>
 
@@ -242,8 +243,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/bar_bottom"
-        android:background="#f0f0f0"
-        android:layout_below="@id/chat_title" >
+        android:layout_below="@id/chat_title"
+        android:background="@color/chatlist_bg"
+        >
         <com.m7.imkfsdk.view.ChatListView
             android:id="@+id/chat_list"
             android:layout_width="match_parent"
@@ -270,19 +272,13 @@
         android:gravity="center"
         android:orientation="horizontal"
         android:background="@color/lightgrey">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="当前咨询人数较多,你排在第"/>
+
         <TextView
             android:id="@+id/chat_queue_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/maincolor"
             android:text="1"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="位"/>
+
+
     </LinearLayout>
 </RelativeLayout>

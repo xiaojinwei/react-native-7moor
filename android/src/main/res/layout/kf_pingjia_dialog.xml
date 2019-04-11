@@ -18,7 +18,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="15dp"
             android:layout_marginTop="15dp"
-            android:text="非常满意"
+            android:text="@string/very_satisfaction"
             android:textSize="18sp" />
     </LinearLayout>
 
@@ -36,7 +36,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="15dp"
             android:layout_marginTop="15dp"
-            android:text="满意"
+            android:text="@string/satisfaction"
             android:textSize="18sp" />
     </LinearLayout>
 
@@ -54,7 +54,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="15dp"
             android:layout_marginTop="15dp"
-            android:text="不满意"
+            android:text="@string/not_satisfaction"
             android:textSize="18sp" />
     </LinearLayout>
 
@@ -72,7 +72,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="15dp"
             android:layout_marginTop="15dp"
-            android:text="取消"
+            android:text="@string/cancel"
             android:textSize="18sp" />
     </LinearLayout>
 

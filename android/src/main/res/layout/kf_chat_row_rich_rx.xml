@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="wrap_content"
+    >
 
     <TextView
         android:id="@+id/chatting_time_tv"
@@ -36,7 +37,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="8dp"
             android:layout_toRightOf="@id/chatting_avatar_iv"
-            android:text="姓名"
+            android:text="@string/name"
             android:textColor="@color/all_black"
             android:textSize="10sp"
             android:visibility="gone" />
@@ -60,7 +61,7 @@
                 android:layout_marginTop="5dp"
                 android:layout_marginLeft="5dp"
                 android:layout_marginRight="5dp"
-                android:text="标题"
+                android:text="@string/titlename"
                 android:maxLines="2"
                 android:ellipsize="end"
                 android:textSize="16sp"
@@ -81,7 +82,7 @@
                     android:layout_height="wrap_content"
                     android:textColor="@color/grey"
                     android:textSize="14sp"
-                    android:text="内容"
+                    android:text="@string/content"
                     android:maxLines="2"
                     android:ellipsize="end"
                     />
@@ -112,7 +113,7 @@
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
         android:paddingTop="4dp"
-        android:text="对方撤回了一条消息"
+        android:text="@string/writedrown_msg"
         android:textSize="12sp"
         android:visibility="gone"/>
 

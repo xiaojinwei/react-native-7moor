@@ -4,7 +4,9 @@ package com.reactlibrary;
 import android.Manifest;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.facebook.react.bridge.Promise;
@@ -21,6 +23,7 @@ public class RNSevenMoorModule extends ReactContextBaseJavaModule {
 
     private final ReactApplicationContext reactContext;
 
+    KfStartHelper helper;
     public RNSevenMoorModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
@@ -34,30 +37,42 @@ public class RNSevenMoorModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void registerSDK(String key, String userName, String userId) {
 //        Toast.makeText(reactContext.getCurrentActivity(),"key:"+key+"--userName:"+userName+"--userId:"+userId, Toast.LENGTH_SHORT).show();
-        final KfStartHelper helper = new KfStartHelper(reactContext.getCurrentActivity());
-        helper.setSaveMsgType(1);
-        helper.initSdkChat(key, userName, userId);
+
+        if (helper == null){
+            helper = new KfStartHelper(reactContext.getCurrentActivity());
+        }
+
         /**
          * 文件写入权限 （初始化需要写入文件，点击在线客服按钮之前需打开文件写入权限）
+         * 读取设备 ID 权限 （初始化需要获取用户的设备 ID）
          */
-        if (PermissionUtils.hasAlwaysDeniedPermission(reactContext.getCurrentActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            PermissionUtils.requestPermissions(reactContext.getCurrentActivity(), 0x11, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, new PermissionUtils.OnPermissionListener() {
-                @Override
-                public void onPermissionGranted() {
-                }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (PermissionUtils.hasAlwaysDeniedPermission(reactContext.getCurrentActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE,Manifest.permission.READ_EXTERNAL_STORAGE)) {
 
-                @Override
-                public void onPermissionDenied(String[] deniedPermissions) {
-                    Toast.makeText(reactContext.getCurrentActivity(), "权限不够", Toast.LENGTH_SHORT).show();
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            reactContext.getCurrentActivity().finish();
-                        }
-                    }, 2000);
-                }
-            });
+                PermissionUtils.requestPermissions(reactContext.getCurrentActivity(), 0x11, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE,Manifest.permission.READ_EXTERNAL_STORAGE}, new PermissionUtils.OnPermissionListener() {
+                    @Override
+                    public void onPermissionGranted() {
+                    }
+
+                    @Override
+                    public void onPermissionDenied(String[] deniedPermissions) {
+                        Toast.makeText(reactContext.getCurrentActivity(), "权限不够", Toast.LENGTH_SHORT).show();
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                reactContext.getCurrentActivity().finish();
+                            }
+                        }, 2000);
+                    }
+                });
+            }
         }
+
+//        helper.setSaveMsgType(1);
+        helper.initSdkChat(key, userName, userId,true);
+        Log.d("KfStartHelper","key:"+key+"--userName:"+userName+"---userId:"+userId);
+
+//        reactContext.getCurrentActivity().startActivity(new Intent(reactContext.getCurrentActivity(),MainActivity.class));
     }
     @ReactMethod
     public void sdkGetUnReadMessage(String key, String userName, String userId, final Promise promise) {
@@ -65,10 +80,14 @@ public class RNSevenMoorModule extends ReactContextBaseJavaModule {
 
 
 
-            final KfStartHelper helper = new KfStartHelper(reactContext.getCurrentActivity());
-            helper.setSaveMsgType(1);
-            helper.startKFService(key, userName, userId);
+//            final KfStartHelper helper = new KfStartHelper(reactContext.getCurrentActivity());
+//            helper.setSaveMsgType(1);
+//            helper.startKFService(key, userName, userId);
+            helper.initSdkChat(key, userName, userId,false);
+
             int unReadCount = IMChatManager.getInstance().getMsgUnReadCount();
+            Log.d("KfStartHelper Message","key:"+key+"--userName:"+userName+"---userId:"+userId+"--unReadCount："+unReadCount);
+
             promise.resolve(unReadCount);
 
         } catch (Exception e) {

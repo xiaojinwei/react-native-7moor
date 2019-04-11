@@ -50,7 +50,6 @@ public class TextTxChatRow extends BaseChatRow {
 
     @Override
     protected void buildChattingData(Context context, BaseHolder baseHolder, FromToMessage detail, int position) {
-
         this.context = context;
         TextViewHolder holder = (TextViewHolder) baseHolder;
         FromToMessage message = detail;

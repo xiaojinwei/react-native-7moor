@@ -1,6 +1,7 @@
 package com.m7.imkfsdk.chat.holder;
 
 import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -12,6 +13,8 @@ import com.m7.imkfsdk.chat.adapter.ChatAdapter;
 import com.m7.imkfsdk.utils.DensityUtil;
 import com.m7.imkfsdk.view.VoiceAnimImageView;
 import com.moor.imkf.model.entity.FromToMessage;
+
+import java.io.IOException;
 
 /**
  * Created by longwei on 2016/3/9.
@@ -89,7 +92,22 @@ public class VoiceViewHolder extends BaseHolder {
             return;
         }
 
-        holder.voiceSecondView.setText(detail.voiceSecond+"''");
+        if (detail.voiceSecond != null && !detail.voiceSecond.equals("")) {
+            holder.voiceSecondView.setText(detail.voiceSecond + "''");
+        } else {
+            try {
+                int second = 0;
+                MediaPlayer mediaPlayer = new MediaPlayer();
+                mediaPlayer.setDataSource(detail.filePath);
+                mediaPlayer.prepare();
+                second = mediaPlayer.getDuration()/1000;
+                mediaPlayer.release();
+                holder.voiceSecondView.setText(second + "''");
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         if (!receive) {
 //            int duration = (detail.recordTime).intValue();

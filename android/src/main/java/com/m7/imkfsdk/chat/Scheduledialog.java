@@ -1,7 +1,6 @@
 package com.m7.imkfsdk.chat;
 
 import android.app.DialogFragment;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
@@ -11,6 +10,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.reactlibrary.R;
+import com.m7.imkfsdk.constant.Constants;
 import com.moor.imkf.model.entity.ScheduleConfig;
 
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ public class Scheduledialog extends DialogFragment {
         getDialog().setCanceledOnTouchOutside(false);
 
         // Get the layout inflater
-        View view = inflater.inflate(R.layout.kf_dialog_investigate, null);
+        View view = inflater.inflate(R.layout.kf_dialog_common, null);
         investigateListView = (ListView) view.findViewById(R.id.investigate_list);
 
         Bundle bundle = getArguments();
@@ -57,13 +57,7 @@ public class Scheduledialog extends DialogFragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 dismiss();
                 ScheduleConfig.EntranceNodeBean.EntrancesBean bean = (ScheduleConfig.EntranceNodeBean.EntrancesBean) parent.getAdapter().getItem(position);
-                Intent chatIntent = new Intent(getActivity(), ChatActivity.class);
-                chatIntent.putExtra("type","schedule");
-                chatIntent.putExtra("scheduleId",scheduleId);
-                chatIntent.putExtra("processId",processId);
-                chatIntent.putExtra("currentNodeId",bean.getProcessTo());
-                chatIntent.putExtra("processType",bean.getProcessType());
-                startActivity(chatIntent);
+                ChatActivity.startActivity(getActivity(), Constants.TYPE_SCHEDULE,scheduleId,processId,bean.getProcessTo(),bean.getProcessType(),bean.get_id());
 
             }
         });

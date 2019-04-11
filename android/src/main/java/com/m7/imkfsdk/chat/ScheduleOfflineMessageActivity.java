@@ -39,7 +39,7 @@ public class ScheduleOfflineMessageActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.kf_scheduledialog_offline);
+        setContentView(R.layout.kf_dialog_offline);
 
         loadingFragmentDialog = new LoadingFragmentDialog();
 

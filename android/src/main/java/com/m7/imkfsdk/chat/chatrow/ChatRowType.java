@@ -44,9 +44,9 @@ public enum ChatRowType {
 
     IFRAME_ROW_RECEIVED("C700R" , Integer.valueOf(10)),
 
-    VIDEO_ROW_RECEIVED("C800R" , Integer.valueOf(11)),
+    BREAK_TIP_ROW_RECEIVED("C800R" , Integer.valueOf(11)),
 
-    VIDEO_ROW_TRANSMIT("C800T" , Integer.valueOf(12)),
+    TRIP_ROW_RECEIVED("C900R" , Integer.valueOf(12)),
     /**
      * 知识库富文本
      */

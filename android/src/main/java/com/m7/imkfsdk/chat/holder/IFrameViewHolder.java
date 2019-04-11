@@ -2,6 +2,8 @@ package com.m7.imkfsdk.chat.holder;
 
 import android.view.View;
 import android.webkit.WebView;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 
 import com.reactlibrary.R;
 

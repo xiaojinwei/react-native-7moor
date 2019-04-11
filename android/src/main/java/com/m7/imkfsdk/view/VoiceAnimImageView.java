@@ -163,9 +163,9 @@ public class VoiceAnimImageView extends TextView {
 		case TYPE_VOICE_DOWNLOADING:
 			
 			if(isFrom) {
-				setBackgroundDrawable(mActivity.getResources().getDrawable(R.drawable.kf_chatfrom_bg_voice_downloading));
+				setBackgroundDrawable(mActivity.getResources().getDrawable(R.drawable.kf_chatfrom_bg_normal));
 			} else {
-				setBackgroundDrawable(mActivity.getResources().getDrawable(R.drawable.kf_chatto_bg_voice_downloading));
+				setBackgroundDrawable(mActivity.getResources().getDrawable(R.drawable.kf_chatto_bg_normal));
 			}
 			
 			setAnimation(mAlphaAnimation);

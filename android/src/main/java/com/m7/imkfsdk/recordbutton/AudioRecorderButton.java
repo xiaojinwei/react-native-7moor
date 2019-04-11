@@ -5,11 +5,16 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 
 import com.reactlibrary.R;
+
+import static android.R.attr.handle;
+import static android.R.attr.x;
+import static android.R.attr.y;
 
 
 /**
@@ -49,7 +54,7 @@ public class AudioRecorderButton extends Button implements AudioManager.AudioSta
 
         @Override
         public void run() {
-            is_send = true;
+            is_send=true;
             while (isRecording) {
                 try {
                     Thread.sleep(100);
@@ -108,7 +113,7 @@ public class AudioRecorderButton extends Button implements AudioManager.AudioSta
     private Handler handler = new Handler() {
 
 
-        public void handleMessage(Message msg) {
+        public void handleMessage(android.os.Message msg) {
             switch (msg.what) {
                 case MSG_RECORDER_PREPARE:
                     mDialogManager.showDialog();
@@ -130,15 +135,13 @@ public class AudioRecorderButton extends Button implements AudioManager.AudioSta
                         handler.sendMessageDelayed(message, 1000);
                         leftTime--;
                     } else {
-                        if (isRecording) {
-                            mDialogManager.exceedTime();
-                            handler.sendMessageDelayed(handler.obtainMessage(MSG_TIME_LEFT_EXCEED_ALARM), 1000);
-                            if (listener != null) {
-                                listener.onRecordFinished(mTime, mAudioManager.getCurrentFilePath(), mAudioManager.getPCMFilePath());
-                            }
-                            mAudioManager.release();
-                            reset();
+                        mDialogManager.exceedTime();
+                        handler.sendMessageDelayed(handler.obtainMessage(MSG_TIME_LEFT_EXCEED_ALARM), 1000);
+                        if (listener != null) {
+                            listener.onRecordFinished(mTime, mAudioManager.getCurrentFilePath(), mAudioManager.getPCMFilePath());
                         }
+                        mAudioManager.release();
+                        reset();
                     }
                     break;
                 case MSG_TIME_LEFT_EXCEED_ALARM:
@@ -200,6 +203,30 @@ public class AudioRecorderButton extends Button implements AudioManager.AudioSta
                     handler.removeMessages(MSG_TIME_LEFT_EXCEED_ALARM);
                 }
 
+                reset();
+                break;
+            case MotionEvent.ACTION_CANCEL:
+
+                if (!mReady) {
+                    reset();
+                    return super.onTouchEvent(event);
+                }
+                if (!isRecording || mTime < 0.9) {
+                    mDialogManager.tooShort();
+                    mAudioManager.cancel();
+                    handler.sendEmptyMessageDelayed(MSG_DIALOG_DISMISS, 1000);
+                } else if (mCurrentState == STATE_RECORDING) {
+                    mDialogManager.dismissDialog();
+                    if (listener != null) {
+                        listener.onRecordFinished(mTime, mAudioManager.getCurrentFilePath(),mAudioManager.getPCMFilePath());
+                    }
+                    mAudioManager.release();
+                } else if (mCurrentState == STATE_WANT_TO_CANCEL) {
+                    mDialogManager.dismissDialog();
+                    mAudioManager.cancel();
+                    handler.removeMessages(MSG_TIME_LEFT_TEN);
+                    handler.removeMessages(MSG_TIME_LEFT_EXCEED_ALARM);
+                }
                 reset();
                 break;
         }

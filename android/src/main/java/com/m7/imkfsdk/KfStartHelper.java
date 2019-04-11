@@ -16,19 +16,15 @@ import com.moor.imkf.GetGlobleConfigListen;
 import com.moor.imkf.GetPeersListener;
 import com.moor.imkf.IMChatManager;
 import com.moor.imkf.InitListener;
-import com.moor.imkf.http.HttpManager;
-import com.moor.imkf.http.HttpResponseListener;
 import com.moor.imkf.model.entity.CardInfo;
 import com.moor.imkf.model.entity.Peer;
 import com.moor.imkf.model.entity.ScheduleConfig;
-import com.moor.imkf.model.parser.HttpParser;
-import com.moor.imkf.requesturl.RequestUrl;
-import com.moor.imkf.tcpservice.service.IMService;
 import com.moor.imkf.utils.LogUtils;
 import com.moor.imkf.utils.MoorUtils;
+import com.reactlibrary.R;
 
 import java.util.List;
-import com.reactlibrary.R;
+
 /**
  * Created by pangw on 2018/7/9.
  */
@@ -43,8 +39,11 @@ public class KfStartHelper {
     private String userName;
     private String userId;
 
+    private Boolean isOpenChat = false;
+
     public void setCard(CardInfo card) {
         this.card = card;
+        IMChatManager.getInstance().cardInfo = card;
     }
 
     public KfStartHelper(Activity activity) {
@@ -71,25 +70,28 @@ public class KfStartHelper {
     }
 
     public void initSdkChat(String accessId, String userName,
-                            String userId) {
+                            String userId,Boolean isOpenChat) {
         this.accessId = accessId;
         this.userName = userName;
         this.userId = userId;
-
+        this.isOpenChat = isOpenChat;
         if (!MoorUtils.isNetWorkConnected(context)) {
             Toast.makeText(context, R.string.notnetwork, Toast.LENGTH_SHORT).show();
             return;
         }
-        IMService.hasRelogin = false;
         loadingDialog.show(mActivity.getFragmentManager(), "");
         if (IMChatManager.isKFSDK) {
             getIsGoSchedule();
         } else {
-            setHostAndPost();
+            startKFService();
         }
     }
 
     private void getIsGoSchedule() {
+        if (!isOpenChat){
+            loadingDialog.dismiss();
+            return;
+        }
         IMChatManager.getInstance().getWebchatScheduleConfig(new GetGlobleConfigListen() {
             @Override
             public void getSchedule(ScheduleConfig sc) {
@@ -164,34 +166,6 @@ public class KfStartHelper {
         });
     }
 
-    private void setHostAndPost() {
-        HttpManager.getTcpServiceAddress(accessId, userName, userId, new HttpResponseListener() {
-            @Override
-            public void onSuccess(String responseStr) {
-                if (HttpParser.getSuccess(responseStr)) {
-                    RequestUrl.baseTcpHost = HttpParser.getHost(responseStr);
-                    RequestUrl.baseTcpPort = HttpParser.getPort(responseStr);
-                    startKFService();
-                } else {
-                    retryGetHost();
-                }
-            }
-
-            @Override
-            public void onFailed() {
-                retryGetHost();
-            }
-        });
-    }
-
-    private void retryGetHost() {
-        if (RequestUrl.baseHttp == RequestUrl.baseHttp1) {
-            RequestUrl.baseHttp = RequestUrl.baseHttp2;
-            setHostAndPost();
-        } else {
-            startKFService();
-        }
-    }
 
     private void startKFService() {
 
@@ -214,6 +188,7 @@ public class KfStartHelper {
                         Log.d("MainActivity", "sdk初始化失败, 请填写正确的accessid");
                     }
                 });
+                Log.d("KfStartHelper", "context："+context);
                 IMChatManager.getInstance().init(context, receiverAction, accessId, userName, userId);
             }
         }.start();

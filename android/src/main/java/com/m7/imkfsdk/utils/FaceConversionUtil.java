@@ -9,7 +9,7 @@ import android.text.style.ImageSpan;
 import android.util.Log;
 import android.widget.TextView;
 
-
+import com.reactlibrary.R;
 import com.moor.imkf.model.entity.ChatEmoji;
 import com.moor.imkf.utils.MoorUtils;
 
@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.reactlibrary.R;
+
 /**
  * 表情转换工具类*
  */
@@ -59,6 +59,7 @@ public class FaceConversionUtil {
 	public SpannableString getExpressionString(Context context, String str, TextView textView) {
 		SpannableString spannableString = new SpannableString(str);
 		// 正则表达式比配字符串里是否含有表情，如： 我好[开心]啊
+//		String zhengze = "\\[[^\\]]+\\]";
 		String zhengze = "\\:[^\\:]+\\:";
 		// 通过传入的正则表达式来生成一个pattern
 		Pattern sinaPatten = Pattern.compile(zhengze, Pattern.CASE_INSENSITIVE);

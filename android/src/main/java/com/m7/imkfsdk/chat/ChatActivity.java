@@ -3,12 +3,15 @@ package com.m7.imkfsdk.chat;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -16,8 +19,12 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -26,8 +33,10 @@ import android.support.v4.view.ViewPager;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.text.Editable;
 import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -53,38 +62,45 @@ import android.widget.Toast;
 
 import com.reactlibrary.R;
 import com.m7.imkfsdk.chat.adapter.ChatAdapter;
-import com.m7.imkfsdk.chat.video.InComingVideoActivity;
-import com.m7.imkfsdk.chat.video.PeerVideoActivity;
+import com.m7.imkfsdk.constant.Constants;
 import com.m7.imkfsdk.recordbutton.AudioRecorderButton;
 import com.m7.imkfsdk.utils.FaceConversionUtil;
 import com.m7.imkfsdk.utils.FileUtils;
 import com.m7.imkfsdk.utils.PermissionUtils;
 import com.m7.imkfsdk.utils.PickUtils;
 import com.m7.imkfsdk.utils.ToastUtils;
+import com.m7.imkfsdk.view.ActionSheetDialog;
 import com.m7.imkfsdk.view.ChatListView;
+import com.m7.imkfsdk.view.TcpExitDiaglog;
 import com.moor.imkf.AcceptOtherAgentListener;
 import com.moor.imkf.ChatListener;
+import com.moor.imkf.GetGlobleConfigListen;
 import com.moor.imkf.GetPeersListener;
 import com.moor.imkf.IMChat;
 import com.moor.imkf.IMChatManager;
 import com.moor.imkf.IMMessage;
 import com.moor.imkf.OnConvertManualListener;
 import com.moor.imkf.OnSessionBeginListener;
-import com.moor.imkf.PushVideoListener;
 import com.moor.imkf.db.dao.GlobalSetDao;
 import com.moor.imkf.db.dao.InfoDao;
 import com.moor.imkf.db.dao.MessageDao;
 import com.moor.imkf.eventbus.EventBus;
+import com.moor.imkf.http.HttpManager;
+import com.moor.imkf.http.HttpResponseListener;
 import com.moor.imkf.model.construct.JsonBuild;
 import com.moor.imkf.model.entity.CardInfo;
 import com.moor.imkf.model.entity.ChatEmoji;
 import com.moor.imkf.model.entity.ChatMore;
 import com.moor.imkf.model.entity.FromToMessage;
 import com.moor.imkf.model.entity.GlobalSet;
-import com.moor.imkf.model.entity.Investigate;
 import com.moor.imkf.model.entity.Peer;
-import com.moor.imkf.tcpservice.event.ReLoginSuccessEvent;
+import com.moor.imkf.model.entity.ScheduleConfig;
+import com.moor.imkf.tcpservice.event.ReSendMessage;
+import com.moor.imkf.tcpservice.event.TcpBreakEvent;
 import com.moor.imkf.tcpservice.event.UnAssignEvent;
+import com.moor.imkf.tcpservice.logger.Logger;
+import com.moor.imkf.tcpservice.service.IMService;
+import com.moor.imkf.tcpservice.service.TcpManager;
 import com.moor.imkf.utils.LogUtils;
 import com.moor.imkf.utils.MoorUtils;
 import com.moor.imkf.utils.NullUtil;
@@ -113,6 +129,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
             mChatMoreContainer;
     private LinearLayout mMore;
     private AudioRecorderButton mRecorderButton;
+    //	private SpeechRecorderButton mRecorderButton;
     private RelativeLayout mChatFaceContainer;
     private ImageView mChatEmojiNormal, mChatEmojiChecked;
     private InputMethodManager manager;
@@ -128,6 +145,10 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
     private List<MoreAdapter> moreAdapters;
     private int current = 0;
     private ArrayList<ChatMore> moreList;
+    private String codeDescription = "由于您长时间未接入，会话已被系统关闭~"; //更新内容描述信息
+    private String codeDescription2 = "系统监测到网络异常，你可能收不到客服消息，请退出重试~"; //更新内容描述信息
+    private TcpExitDiaglog singleButtonDialog;
+    private TcpExitDiaglog.Builder builder;
     // 表情分页的结果集合
     public List<List<ChatMore>> moreLists = new ArrayList<List<ChatMore>>();
     private List<FromToMessage> fromToMessage;
@@ -136,27 +157,16 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
     private int i = 2;
     private int height;
     private List<FromToMessage> descFromToMessage = new ArrayList<FromToMessage>();
-
     private static final String tag = "ChatActivity";
     private static final int PICK_IMAGE_ACTIVITY_REQUEST_CODE = 200;
     private static final int PICK_FILE_ACTIVITY_REQUEST_CODE = 300;
     private String picFileFullName;
-
     MsgReceiver msgReceiver;
     KeFuStatusReceiver keFuStatusReceiver;
-
-    private String peerId;
-    private String type = "";
-    private String scheduleId = "";
-    private String processId = "";
-    private String currentNodeId = "";
-    private String schedule_id = "";
-    private String schedule_topeer = "";
-    private String processType = "";
+    private String peerId = "";
     LinearLayout chat_queue_ll;
     TextView chat_queue_tv;
     LinearLayout bar_bottom;
-
     private static final int HANDLER_MSG = 1;
     private static final int HANDLER_MSG_MORE = 2;
     private static final int HANDLER_ROBOT = 0x111;
@@ -172,12 +182,34 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
     private static final int HANDLER_LEAVEMSG = 0x1100;
     private static final int HANDLER_WRITING = 0x1200;
     private static final int HANDLER_NO_WRITING = 0x1300;
-
     private boolean isRobot = false;
+    private String type = "";
+    private String scheduleId = "";
+    private String processId = "";
+    private String currentNodeId = "";
+    private String schedule_id = "";
+    private String schedule_topeer = "";
+    private String processType = "";
     private String titleName = "等待接入";
-    private MyHandler handler = new MyHandler();
+    private String entranceId = "";
+    private Handler handler = new MyHandle();
+    private boolean isShowExitDialog = true;//标记 如果pc端率先结束了会话，这个时候app隐藏对话框，不展示强制退出的弹框
 
-    class MyHandler extends Handler {
+    //小陌机器人评价是否完成
+    private Boolean robotEvaluationFinish = false;
+
+    //是否和机器人发送过消息
+    private boolean hasSendRobotMsg = false;
+
+    ChatMore chatMore2, chatMore3, chatMore4;
+
+    private boolean isBotOpen = false;
+
+    private boolean isQueue = false;
+
+    private boolean isServiceConnected = false;
+
+    class MyHandle extends Handler {
         @Override
         public void handleMessage(Message msg) {
             if (msg.what == HANDLER_MSG) {
@@ -185,162 +217,129 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
             } else if (msg.what == HANDLER_MSG_MORE) {
                 // 加载更多的时候
                 JZMoreMessage();
-            }
-            if (msg.what == HANDLER_ROBOT) {
+            } else if (msg.what == HANDLER_ROBOT) {
                 //当前是机器人
-//                Toast.makeText(getApplicationContext(), "当前是机器人为你服务", Toast.LENGTH_SHORT).show();
-                chat_tv_convert.setVisibility(View.VISIBLE);
+                ToastUtils.showShort(R.string.now_robit);
                 if (IMChatManager.getInstance().isShowTransferBtn()) {
                     chat_tv_convert.setVisibility(View.VISIBLE);
                 } else {
                     chat_tv_convert.setVisibility(View.GONE);
                 }
-
                 bar_bottom.setVisibility(View.VISIBLE);
                 isRobot = true;
-            }
-            if (msg.what == HANDLER_LEAVEMSG) {
+                setChatMoreList();
+            } else if (msg.what == HANDLER_ONLINE) {
+                //当前是客服
+                chat_tv_convert.setVisibility(View.GONE);
+            } else if (msg.what == HANDLER_WRITING) {
+                //对方当前正在输入
+                mOtherName.setText(R.string.other_writing);
+            } else if (msg.what == HANDLER_NO_WRITING) {
+                mOtherName.setText(titleName);
+            } else if (msg.what == HANDLER_OFFNLINE) {
+                ToastUtils.showShort(R.string.people_not_online);
+                if (IMChatManager.getInstance().isShowTransferBtn()) {
+                    chat_tv_convert.setVisibility(View.VISIBLE);
+                } else {
+                    chat_tv_convert.setVisibility(View.GONE);
+                }
+                if (isRobot) {
+                    bar_bottom.setVisibility(View.VISIBLE);
+                } else {
+                    bar_bottom.setVisibility(View.VISIBLE);
+                }
+                showOffLineDialog();
+            } else if (msg.what == HANDLER_INVESTIGATE) {
+                sendInvestigate();
+            } else if (msg.what == HANDLER_QUEUENUM) {
+                String queueNem = (String) msg.obj;
+                showQueueNumLabel(queueNem);
+                isQueue = true;
+                setChatMoreList();
+            } else if (msg.what == HANDLER_CLIAM) {
+                chat_queue_ll.setVisibility(View.GONE);
+                chat_tv_convert.setVisibility(View.GONE);
+                bar_bottom.setVisibility(View.VISIBLE);
+                isRobot = false;
+                isQueue = false;
+                setChatMoreList();
+                Toast.makeText(getApplicationContext(), R.string.people_now, Toast.LENGTH_SHORT).show();
+            } else if (msg.what == HANDLER_FINISH) {
+                //  showSessionFinishDialog();
+                // 如果会话已经不存在了
+                if (IMChatManager.getInstance().isFinishWhenReConnect) {
+                } else {
+                    bar_bottom.setVisibility(View.GONE);
+                }
+                mOtherName.setText(R.string.people_isleave);
+                titleName = getString(R.string.people_isleave);
+                chat_tv_convert.setVisibility(View.GONE);
+            } else if (msg.what == HANDLER_LEAVEMSG) {
                 //跳留言
                 Intent intent = new Intent(ChatActivity.this, ScheduleOfflineMessageActivity.class);
                 intent.putExtra("LeavemsgNodeId", schedule_id);
                 intent.putExtra("ToPeer", schedule_topeer);
                 startActivity(intent);
                 finish();
-            }
-            if (msg.what == HANDLER_ONLINE) {
-                //当前是客服
-                chat_tv_convert.setVisibility(View.GONE);
-            }
-            if (msg.what == HANDLER_WRITING) {
-                //对方当前正在输入
-                mOtherName.setText("对方正在输入...");
-            }
-            if (msg.what == HANDLER_NO_WRITING) {
-                mOtherName.setText(titleName);
-            }
-
-            if (msg.what == HANDLER_OFFNLINE) {
-                Toast.makeText(getApplicationContext(), "当前客服不在线", Toast.LENGTH_SHORT).show();
-                chat_tv_convert.setVisibility(View.VISIBLE);
-
-                if (IMChatManager.getInstance().isShowTransferBtn()) {
-                    chat_tv_convert.setVisibility(View.VISIBLE);
-                } else {
-                    chat_tv_convert.setVisibility(View.GONE);
-                }
-
-
-                if (isRobot) {
-                    bar_bottom.setVisibility(View.VISIBLE);
-                } else {
-                    bar_bottom.setVisibility(View.GONE);
-                }
-                showOffineDialog();
-            }
-
-            if (msg.what == HANDLER_INVESTIGATE) {
-                sendInvestigate();
-            }
-
-            if (msg.what == HANDLER_QUEUENUM) {
-                String queueNem = (String) msg.obj;
-                showQueueNumLabel(queueNem);
-            }
-
-            if (msg.what == HANDLER_CLIAM) {
-                chat_queue_ll.setVisibility(View.GONE);
-                chat_tv_convert.setVisibility(View.GONE);
-                bar_bottom.setVisibility(View.VISIBLE);
-                isRobot = false;
-
-                Toast.makeText(getApplicationContext(), "当前是客服为你服务", Toast.LENGTH_SHORT).show();
-            }
-
-            if (msg.what == HANDLER_FINISH) {
-                bar_bottom.setVisibility(View.GONE);
-                mOtherName.setText("客服结束了会话");
-                titleName = "客服结束了会话";
-            }
-            if (msg.what == HANDLER_BREAK) {
+            } else if (msg.what == HANDLER_BREAK) {
                 //断开会话
                 IMChatManager.getInstance().quitSDk();
                 finish();
-            }
-            if (msg.what == HANDLER_BREAK_TIP) {
+            } else if (msg.what == HANDLER_BREAK_TIP) {
                 //断开会话前提示
                 IMChat.getInstance().createBreakTipMsg(break_tips);
                 updateMessage();
-            }
-            if (msg.what == HANDLER_VIPASSIGNFAIL) {
+            } else if (msg.what == HANDLER_VIPASSIGNFAIL) {
                 //专属座席不在线
                 showVipAssignFailDialog();
-            }
-            if ("图库".equals(msg.obj)) {
+            } else if (getString(R.string.chat_img).equals(msg.obj)) {
                 openAlbum();
-            } else if ("评价".equals(msg.obj)) {
-                //评价
+            } else if (getString(R.string.chat_evaluate).equals(msg.obj)) {
                 openInvestigateDialog();
-            } else if ("文件".equals(msg.obj)) {
+            } else if (getString(R.string.chat_file).equals(msg.obj)) {
                 openFile();
-            } else if ("视频".equals(msg.obj)) {
-                if (Build.VERSION.SDK_INT < 23) {
-                    openVideo();
-                } else {
-                    //6.0
-                    if (ContextCompat.checkSelfPermission(ChatActivity.this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                        //该权限已经有了
-                        openVideo();
-                    } else {
-                        //申请该权限
-                        ActivityCompat.requestPermissions(ChatActivity.this, new String[]{Manifest.permission.CAMERA}, 0x5555);
-                    }
-                }
-
             }
         }
     }
 
-    /**
-     * 打开视频界面
-     */
-    private void openVideo() {
+/*    private Messenger messenger;
+    private ServiceConnection conn = new ServiceConnection() {
 
-        IMChatManager.getInstance().pushVideo(new PushVideoListener() {
-            @Override
-            public void onSuccess(String name, String room) {
-                Intent intent = new Intent(ChatActivity.this, PeerVideoActivity.class);
-                intent.putExtra(IMChatManager.CONSTANT_VIDEO_USERNAME, name);
-                intent.putExtra(IMChatManager.CONSTANT_VIDEO_ROOMNAME, room);
-                startActivity(intent);
-            }
+        @Override
+        public void onServiceDisconnected(ComponentName cn) {
+            isServiceConnected = false;
+        }
 
-            @Override
-            public void onFailed(String reason) {
-                Toast.makeText(ChatActivity.this, reason, Toast.LENGTH_SHORT).show();
-            }
-        });
-
-    }
+        @Override
+        public void onServiceConnected(ComponentName cn, IBinder ibiner) {
+            isServiceConnected = true;
+            LogUtils.aTag("服务重启了");
+            messenger = new Messenger(ibiner);//得到Service中的Messenger
+//            if (TcpManager.TcpStatus.BREAK.equals(TcpManager.getInstance(IMChatManager.getInstance().getAppContext()).getTcpStatus())) {//如果tcp断了，就重连
+//                Message msg1 = Message.obtain(null, 1001);//告诉IMServie执行重连
+//                try {
+//                    messenger.send(msg1);
+//                } catch (RemoteException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+        }
+    };*/
 
     /**
      * 打开文件选择
      */
     private void openFile() {
-        Intent intent = null;
-        if (Build.VERSION.SDK_INT >= 19) {
-            intent = new Intent(Intent.ACTION_GET_CONTENT);
-            intent.setType("*/*");//设置类型
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-        } else {
-            intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        }
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");//设置类型
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
         startActivityForResult(intent, PICK_FILE_ACTIVITY_REQUEST_CODE);
     }
 
     private void showSessionFinishDialog() {
-        new AlertDialog.Builder(this).setTitle("温馨提示")
-                .setMessage("客服结束了会话，你想要")
-                .setPositiveButton("继续咨询", new DialogInterface.OnClickListener() {
+        new AlertDialog.Builder(this).setTitle(R.string.warm_prompt)
+                .setMessage(R.string.doyouneed)
+                .setPositiveButton(R.string.continuecall, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         IMChatManager.getInstance().getPeers(new GetPeersListener() {
@@ -367,7 +366,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
                         });
                     }
                 })
-                .setNegativeButton("退出", new DialogInterface.OnClickListener() {
+                .setNegativeButton(R.string.back, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         IMChatManager.getInstance().quitSDk();
@@ -381,12 +380,11 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
     }
 
     private void showVipAssignFailDialog() {
-        new AlertDialog.Builder(this).setTitle("温馨提示")
-                .setMessage("你的专属座席不在线，是否需要其它座席服务")
-                .setPositiveButton("需要", new DialogInterface.OnClickListener() {
+        new AlertDialog.Builder(this).setTitle(R.string.warm_prompt)
+                .setMessage(R.string.doyouneedother)
+                .setPositiveButton(R.string.need, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-
                         IMChatManager.getInstance().acceptOtherAgent(peerId, new AcceptOtherAgentListener() {
                             @Override
                             public void onSuccess() {
@@ -400,7 +398,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
                         });
                     }
                 })
-                .setNegativeButton("不需要", new DialogInterface.OnClickListener() {
+                .setNegativeButton(R.string.noneed, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         IMChatManager.getInstance().quitSDk();
@@ -417,18 +415,41 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
      * 显示排队数
      */
     private void showQueueNumLabel(String queueNum) {
-
         if (Integer.parseInt(queueNum) > 0) {
             chat_queue_ll.setVisibility(View.VISIBLE);
-            chat_queue_tv.setText(queueNum);
+            try {
+                String queueNumText = GlobalSetDao.getInstance().getGlobalSet().queueNumText;
+                int beginIndex = queueNumText.indexOf("{");
+                int endIndex = queueNumText.indexOf("}");
+                String newString = queueNumText.replace(queueNumText.substring(beginIndex, endIndex + 1), queueNum);
+                SpannableString ss = new SpannableString(newString);
+                ss.setSpan(new ForegroundColorSpan(Color.parseColor("#21b38a")), beginIndex,
+                        beginIndex + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+                chat_queue_tv.setText(ss);
+            } catch (Exception e) {
+
+                chat_queue_tv.setText(getResources().getText(R.string.numbers01) + queueNum + getResources().getText(R.string.number02));
+            }
         } else {
             chat_queue_ll.setVisibility(View.GONE);
         }
-
     }
 
-    public static void startActivity(Context mContext, String type, String peerId) {
-        startActivity(mContext, type, peerId, null);
+    public static void startActivity(Context mContext, String type, String scheduleId, String processId, String processTo, String processType, String id, CardInfo card) {
+        Intent chatIntent = new Intent(mContext, ChatActivity.class);
+        chatIntent.putExtra("type", type);
+        chatIntent.putExtra("scheduleId", scheduleId);
+        chatIntent.putExtra("processId", processId);
+        chatIntent.putExtra("currentNodeId", processTo);
+        chatIntent.putExtra("processType", processType);
+        chatIntent.putExtra("entranceId", id);
+        chatIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(chatIntent);
+    }
+
+    public static void startActivity(Context mContext, String type, String scheduleId, String processId, String processTo, String processType, String id) {
+        startActivity(mContext, type, scheduleId, processId, processTo, processType, id, null);
     }
 
     public static void startActivity(Context mContext, String type, String peerId, CardInfo card) {
@@ -450,20 +471,8 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
         mContext.startActivity(chatIntent);
     }
 
-    public static void startActivity(Context mContext, String type, String scheduleId, String processId, String processTo, String processType, String id, CardInfo card) {
-        Intent chatIntent = new Intent(mContext, ChatActivity.class);
-        chatIntent.putExtra("type", type);
-        chatIntent.putExtra("scheduleId", scheduleId);
-        chatIntent.putExtra("processId", processId);
-        chatIntent.putExtra("currentNodeId", processTo);
-        chatIntent.putExtra("processType", processType);
-        chatIntent.putExtra("entranceId", id);
-        chatIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(chatIntent);
-    }
-
-    public static void startActivity(Context mContext, String type, String scheduleId, String processId, String processTo, String processType, String id) {
-        startActivity(mContext, type, scheduleId, processId, processTo, processType, id, null);
+    public static void startActivity(Context mContext, String type, String peerId) {
+        startActivity(mContext, type, peerId, null);
     }
 
     @Override
@@ -471,33 +480,12 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.kf_activity_chat);
-
-        //获取技能组id
-        Intent intent = getIntent();
-        if (intent.getStringExtra("PeerId") != null) {
-            peerId = intent.getStringExtra("PeerId");
-        }
-        if (intent.getStringExtra("type") != null) {
-            type = intent.getStringExtra("type");
-        }
-        if (intent.getStringExtra("scheduleId") != null) {
-            scheduleId = intent.getStringExtra("scheduleId");
-        }
-        if (intent.getStringExtra("processId") != null) {
-            processId = intent.getStringExtra("processId");
-        }
-        if (intent.getStringExtra("currentNodeId") != null) {
-            currentNodeId = intent.getStringExtra("currentNodeId");
-        }
-        if (intent.getStringExtra("processType") != null) {
-            processType = intent.getStringExtra("processType");
-        }
-        //初始化成功打标记（引用于调用服务未读消息数）
-        MoorUtils.initForUnread(ChatActivity.this);
+        getIntentData(getIntent());
 
         IntentFilter intentFilter = new IntentFilter("com.m7.imkfsdk.msgreceiver");
         msgReceiver = new MsgReceiver();
         registerReceiver(msgReceiver, intentFilter);
+
         EventBus.getDefault().register(this);
 
         IntentFilter kefuIntentFilter = new IntentFilter();
@@ -511,13 +499,17 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
         kefuIntentFilter.addAction(IMChatManager.FINISH_ACTION);
         kefuIntentFilter.addAction(IMChatManager.USERINFO_ACTION);
         kefuIntentFilter.addAction(IMChatManager.VIPASSIGNFAIL_ACTION);
-        kefuIntentFilter.addAction(IMChatManager.VIDEO_INVITED_ACTION);
+        kefuIntentFilter.addAction(IMChatManager.CANCEL_ROBOT_ACCESS_ACTION);
+        kefuIntentFilter.addAction(IMChatManager.WITHDRAW_ACTION);
         kefuIntentFilter.addAction(IMChatManager.WRITING_ACTION);
-        kefuIntentFilter.addAction(IMChatManager.CANCEL_VIDEO_ACTION);
+        kefuIntentFilter.addAction(IMChatManager.ROBOT_SWITCH_ACTION);
+        kefuIntentFilter.addAction(IMChatManager.TCP_ACTION);
         keFuStatusReceiver = new KeFuStatusReceiver();
         registerReceiver(keFuStatusReceiver, kefuIntentFilter);
         init();
-        initPermission();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            initPermission();
+        }
         registerListener();
         initEmojiViewPager();
         initEmojiPoint();
@@ -527,15 +519,20 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
         initMoreData();
         updateMessage();
         if (type.equals("peedId")) {
+            LogUtils.aTag("beginSession", "ChatActivity482行代码");
             beginSession(peerId);
         }
         if (type.equals("schedule")) {
-            beginScheduleSession(scheduleId, processId, currentNodeId);
+            beginScheduleSession(scheduleId, processId, currentNodeId, entranceId);
         }
+        builder = new TcpExitDiaglog.Builder(this);
+        //设置全局配置
+        setGlobalConfig();
     }
 
+
     private void initPermission() {
-        if (PermissionUtils.hasAlwaysDeniedPermission(this, Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+        if (PermissionUtils.hasAlwaysDeniedPermission(this, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             PermissionUtils.requestPermissions(this, 0x11, new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE}, new PermissionUtils.OnPermissionListener() {
                 @Override
                 public void onPermissionGranted() {
@@ -543,12 +540,11 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
 
                 @Override
                 public void onPermissionDenied(String[] deniedPermissions) {
-                    Toast.makeText(ChatActivity.this, "权限不足", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ChatActivity.this, R.string.notpermession, Toast.LENGTH_SHORT).show();
                 }
             });
         }
     }
-
 
     Timer break_timer;
     Timer break_tip_timer;
@@ -595,6 +591,13 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
      * @param msgStr
      */
     public void sendTextMsg(String msgStr) {
+
+        if (!hasSendRobotMsg) {
+            hasSendRobotMsg = true;
+            setChatMoreList();
+        }
+
+        LogUtils.aTag("send", msgStr);
         FromToMessage fromToMessage = IMMessage.createTxtMessage(msgStr);
 
         //界面显示
@@ -602,24 +605,25 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
         chatAdapter.notifyDataSetChanged();
         mChatList.setSelection(descFromToMessage.size());
         mChatInput.setText("");
+
+        resetBreakTimer();
+
         //发送消息
         IMChat.getInstance().sendMessage(fromToMessage, new ChatListener() {
             @Override
             public void onSuccess() {
                 //消息发送成功
-                Log.d("ChatActivity", "文本消息发送成功");
                 updateMessage();
             }
 
             @Override
             public void onFailed() {
                 //消息发送失败
-                Log.d("ChatActivity", "文本消息发送失败");
                 updateMessage();
             }
 
             @Override
-            public void onProgress(int p) {
+            public void onProgress(int progress) {
 
             }
         });
@@ -705,13 +709,61 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
         if (handler.hasMessages(HANDLER_NO_WRITING)) {
             handler.removeMessages(HANDLER_NO_WRITING);
         }
-
     }
 
+    // 会话被结束掉了，点击输入框，重新开始会话，
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         updateMessage();
+        //小陌机器人评价是否完成
+        robotEvaluationFinish = false;
+
+        //是否和机器人发送过消息
+        hasSendRobotMsg = false;
+
+        isQueue = false;
+        JZflag = true;
+        resetBreakTimer();
+
+        getIntentData(intent);
+         /*临时注释掉*/
+        if (type.equals("peedId")) {
+            LogUtils.aTag("beginSession", "ChatActivity690行代码");
+            beginSession(peerId);
+        }
+        if (type.equals("schedule")) {
+            beginScheduleSession(scheduleId, processId, currentNodeId, entranceId);
+        }
+
+    }
+
+    public void getIntentData(Intent intent) {
+        //获取技能组id
+        if (intent.getStringExtra("PeerId") != null) {
+            peerId = intent.getStringExtra("PeerId");
+        }
+        if (intent.getStringExtra("type") != null) {
+            type = intent.getStringExtra("type");
+        }
+        if (intent.getStringExtra("scheduleId") != null) {
+            scheduleId = intent.getStringExtra("scheduleId");
+        }
+        if (intent.getStringExtra("processId") != null) {
+            processId = intent.getStringExtra("processId");
+        }
+        if (intent.getStringExtra("currentNodeId") != null) {
+            currentNodeId = intent.getStringExtra("currentNodeId");
+        }
+        if (intent.getStringExtra("entranceId") != null) {
+            entranceId = intent.getStringExtra("entranceId");
+        }
+        if (intent.getStringExtra("processType") != null) {
+            processType = intent.getStringExtra("processType");
+        }
+        //初始化成功打标记（引用于调用服务未读消息数）
+        MoorUtils.initForUnread(ChatActivity.this);
+        IMChatManager.getInstance().isFinishWhenReConnect = false;
     }
 
     // 分页加载更多
@@ -777,16 +829,15 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
 
         //转人工服务按钮，判断是否需要显示
         chat_tv_convert = (TextView) this.findViewById(R.id.chat_tv_convert);
+
         if (type.equals("schedule") && !processType.equals("robot")) {
             chat_tv_convert.setVisibility(View.GONE);
         }
-        mOtherName = (TextView) this.findViewById(R.id.other_name);
-
         if (!IMChatManager.getInstance().isShowTransferBtn()) {
             chat_tv_convert.setVisibility(View.GONE);
         }
 
-
+        mOtherName = (TextView) this.findViewById(R.id.other_name);
         mChatInput.setOnFocusChangeListener(new OnFocusChangeListener() {
 
             @Override
@@ -806,14 +857,30 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
 
             @Override
             public void onClick(View v) {
-                mChatEdittextLayout
-                        .setBackgroundResource(R.drawable.kf_input_bar_bg_active);
-                mChatEmojiNormal.setVisibility(View.VISIBLE);
-                mChatEmojiChecked.setVisibility(View.GONE);
 
-                mMore.setVisibility(View.GONE);
-                mChatFaceContainer.setVisibility(View.GONE);
-                mChatMoreContainer.setVisibility(View.GONE);
+                if (MoorUtils.isNetWorkConnected(IMChatManager.getInstance().getAppContext()) &&
+                        TcpManager.TcpStatus.BREAK.equals(TcpManager.getInstance(IMChatManager.getInstance().getAppContext()).getTcpStatus())) {
+//                    Toast.makeText(getApplicationContext(), "检测到您网络异常啦~", Toast.LENGTH_SHORT).show();
+                    LogUtils.aTag("第五个地方break");
+                    TcpManager.getInstance(IMChatManager.getInstance().getAppContext()).setTcpStatus(TcpManager.TcpStatus.NONET);
+                    startReStartDialog3();
+                    return;
+                }
+                if (IMChatManager.getInstance().isFinishWhenReConnect) {
+                    // beginSession();
+                    startReStartDialog();
+                } else {
+                    mChatEdittextLayout
+                            .setBackgroundResource(R.drawable.kf_input_bar_bg_active);
+                    mChatEmojiNormal.setVisibility(View.VISIBLE);
+                    mChatEmojiChecked.setVisibility(View.GONE);
+
+                    mMore.setVisibility(View.GONE);
+                    mChatFaceContainer.setVisibility(View.GONE);
+                    mChatMoreContainer.setVisibility(View.GONE);
+                }
+
+
             }
         });
 
@@ -868,21 +935,16 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
         });
 
         emojis = FaceConversionUtil.getInstace().emojiLists;
-
         moreList = new ArrayList<ChatMore>();
-        ChatMore chatMore2 = new ChatMore(2, R.drawable.kf_icon_chat_pic + "",
-                "图库");
-        ChatMore chatMore3 = new ChatMore(3, R.drawable.kf_icon_chat_file + "",
-                "文件");
-        ChatMore chatMore4 = new ChatMore(4, R.drawable.kf_icon_chat_investigate + "",
-                "评价");
-        ChatMore chatMore5 = new ChatMore(5, R.drawable.kf_icon_chat_video + "",
-                "视频");
+        chatMore2 = new ChatMore(2, R.drawable.kf_icon_chat_pic + "",
+                getString(R.string.chat_img));
+        chatMore3 = new ChatMore(3, R.drawable.kf_icon_chat_file + "",
+                getString(R.string.chat_file));
+        chatMore4 = new ChatMore(4, R.drawable.kf_icon_chat_investigate + "",
+                getString(R.string.chat_evaluate));
         moreList.add(chatMore2);
         moreList.add(chatMore3);
         moreList.add(chatMore4);
-        moreList.add(chatMore5);
-
         int pageCount = (int) Math.ceil(moreList.size() / 8 + 0.1);
         for (int i = 0; i < pageCount; i++) {
             moreLists.add(getData(i));
@@ -893,8 +955,6 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
         mChatInput = (EditText) findViewById(R.id.chat_input);
         mChatIvImageFace = (LinearLayout) findViewById(R.id.chat_iv_image_face);
         mChatIvImageMore = (LinearLayout) findViewById(R.id.chat_iv_image_more);
-
-
         chat_queue_ll = (LinearLayout) findViewById(R.id.chat_queue_ll);
         chat_queue_tv = (TextView) findViewById(R.id.chat_queue_tv);
         bar_bottom = (LinearLayout) findViewById(R.id.bar_bottom);
@@ -943,97 +1003,121 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
 
     @Override
     public void onClick(View v) {
-            if(v.getId() == R.id.chat_tv_back) {
-                //断开长连接
-                IMChatManager.getInstance().quitSDk();
-                finish();
-            }else if(v.getId() == R.id.chat_tv_convert) {
-                //转人工服务
-                IMChatManager.getInstance().convertManual(new OnConvertManualListener() {
-                    @Override
-                    public void onLine() {
-                        if (!type.equals("schedule")) {
-                            //有客服在线,隐藏转人工按钮
-                            chat_tv_convert.setVisibility(View.GONE);
-                            bar_bottom.setVisibility(View.VISIBLE);
-                            mOtherName.setText("等待接入");
-                            titleName = "等待接入";
-                            Toast.makeText(getApplicationContext(), "转人工服务成功", Toast.LENGTH_SHORT).show();
-                        }
+        int i1 = v.getId();
+        if (i1 == R.id.chat_tv_back) {//断开长连接
+            IMChatManager.getInstance().quitSDk();
+            finish();
+
+        } else if (i1 == R.id.chat_tv_convert) {//转人工服务
+            IMChatManager.getInstance().convertManual(new OnConvertManualListener() {
+                @Override
+                public void onLine() {
+                    if (!type.equals("schedule")) {
+                        //有客服在线,隐藏转人工按钮
+                        chat_tv_convert.setVisibility(View.GONE);
+                        bar_bottom.setVisibility(View.VISIBLE);
+                        mOtherName.setText(R.string.wait_link);
+                        titleName = getString(R.string.wait_link);
+                        Toast.makeText(getApplicationContext(), R.string.topeoplesucceed, Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void offLine() {
+                    //当前没有客服在线
+                    if (!type.equals("schedule")) {
+
+                        showOffLineDialog();
                     }
 
-                    @Override
-                    public void offLine() {
-                        if (!type.equals("schedule")) {
-                            //当前没有客服在线
-                            showOffineDialog();
-                        }
-                    }
-                });
-            }else if(v.getId() ==  R.id.chat_send){
-                String txt = mChatInput.getText().toString();
+                }
+            });
+
+        } else if (i1 == R.id.chat_send) {
+            String txt = mChatInput.getText().toString();
+            //如果是tcp断开并且网络ok的情况，执行重连操作
+            if (MoorUtils.isNetWorkConnected(IMChatManager.getInstance().getAppContext()) &&
+                    TcpManager.TcpStatus.BREAK.equals(TcpManager.getInstance(IMChatManager.getInstance().getAppContext()).getTcpStatus())) {
+                Toast.makeText(getApplicationContext(), "检测到您网络异常啦~", Toast.LENGTH_SHORT).show();
+                LogUtils.aTag("第四个地方break");
+//                IMService.isRelogin = true;
+                TcpManager.getInstance(IMChatManager.getInstance().getAppContext()).setTcpStatus(TcpManager.TcpStatus.NONET);
+                startReStartDialog3();
+                return;
+            }
+            if (IMChatManager.getInstance().isFinishWhenReConnect) {
+                startReStartDialog();//并且弹框提示开始新会话
+//            }
+            } else {
                 sendTextMsg(txt);
-            }else if(v.getId() ==  R.id.chat_set_mode_voice){
-                if (Build.VERSION.SDK_INT < 23) {
+            }
+        } else if (i1 == R.id.chat_set_mode_voice) {
+            if (Build.VERSION.SDK_INT < 23) {
+                showVoice();
+            } else {
+                //6.0
+                if (ContextCompat.checkSelfPermission(ChatActivity.this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                    //该权限已经有了
                     showVoice();
                 } else {
-                    //6.0
-                    if (ContextCompat.checkSelfPermission(ChatActivity.this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                        //该权限已经有了
-                        showVoice();
-                    } else {
-                        //申请该权限
-                        ActivityCompat.requestPermissions(ChatActivity.this, new String[]{Manifest.permission.RECORD_AUDIO}, 0x4444);
-                    }
-                }
-
-            }else if(v.getId() ==  R.id.chat_set_mode_keyboard){
-                mChatEdittextLayout.setVisibility(View.VISIBLE);
-                mChatSetModeKeyboard.setVisibility(View.GONE);
-                mChatSetModeVoice.setVisibility(View.VISIBLE);
-                mChatInput.requestFocus();
-                mRecorderButton.setVisibility(View.GONE);
-                mChatFaceContainer.setVisibility(View.GONE);
-
-                if (TextUtils.isEmpty(mChatInput.getText())) {
-                    mChatMore.setVisibility(View.VISIBLE);
-                    mChatSend.setVisibility(View.GONE);
-                } else {
-                    mChatMore.setVisibility(View.GONE);
-                    mChatSend.setVisibility(View.VISIBLE);
-                }
-
-            }else if(v.getId() ==  R.id.chat_emoji_normal){
-                hideKeyboard();
-                mMore.setVisibility(View.VISIBLE);
-                mChatEmojiNormal.setVisibility(View.GONE);
-                mChatEmojiChecked.setVisibility(View.VISIBLE);
-                mChatMoreContainer.setVisibility(View.GONE);
-                mChatFaceContainer.setVisibility(View.VISIBLE);
-                mChatMoreVPager.setVisibility(View.GONE);
-                mChatEmojiVPager.setVisibility(View.VISIBLE);
-            }else if(v.getId() ==  R.id.chat_emoji_checked){
-                mChatEmojiNormal.setVisibility(View.VISIBLE);
-                mChatEmojiChecked.setVisibility(View.GONE);
-                mChatMoreContainer.setVisibility(View.GONE);
-                mChatFaceContainer.setVisibility(View.GONE);
-                mMore.setVisibility(View.GONE);
-            }else if(v.getId() ==  R.id.chat_more) {
-                if (mChatMoreVPager.getVisibility() == View.VISIBLE) {
-                    mChatMoreVPager.setVisibility(View.GONE);
-                    mMore.setVisibility(View.GONE);
-                } else {
-                    mChatMoreVPager.setVisibility(View.VISIBLE);
-                    mMore.setVisibility(View.VISIBLE);
-                    mChatEmojiNormal.setVisibility(View.VISIBLE);
-                    mChatEmojiChecked.setVisibility(View.GONE);
-                    mChatFaceContainer.setVisibility(View.GONE);
-                    mChatMoreContainer.setVisibility(View.VISIBLE);
-                    mChatEmojiVPager.setVisibility(View.GONE);
-
-                    hideKeyboard();
+                    //申请该权限
+                    ActivityCompat.requestPermissions(ChatActivity.this, new String[]{Manifest.permission.RECORD_AUDIO}, 0x4444);
                 }
             }
+
+
+        } else if (i1 == R.id.chat_set_mode_keyboard) {
+            mChatEdittextLayout.setVisibility(View.VISIBLE);
+            mChatSetModeKeyboard.setVisibility(View.GONE);
+            mChatSetModeVoice.setVisibility(View.VISIBLE);
+            mChatInput.requestFocus();
+            mRecorderButton.setVisibility(View.GONE);
+            mChatFaceContainer.setVisibility(View.GONE);
+
+            if (TextUtils.isEmpty(mChatInput.getText())) {
+                mChatMore.setVisibility(View.VISIBLE);
+                mChatSend.setVisibility(View.GONE);
+            } else {
+                mChatMore.setVisibility(View.GONE);
+                mChatSend.setVisibility(View.VISIBLE);
+            }
+
+
+        } else if (i1 == R.id.chat_emoji_normal) {
+            hideKeyboard();
+            mMore.setVisibility(View.VISIBLE);
+            mChatEmojiNormal.setVisibility(View.GONE);
+            mChatEmojiChecked.setVisibility(View.VISIBLE);
+            mChatMoreContainer.setVisibility(View.GONE);
+            mChatFaceContainer.setVisibility(View.VISIBLE);
+            mChatMoreVPager.setVisibility(View.GONE);
+            mChatEmojiVPager.setVisibility(View.VISIBLE);
+
+        } else if (i1 == R.id.chat_emoji_checked) {
+            mChatEmojiNormal.setVisibility(View.VISIBLE);
+            mChatEmojiChecked.setVisibility(View.GONE);
+            mChatMoreContainer.setVisibility(View.GONE);
+            mChatFaceContainer.setVisibility(View.GONE);
+            mMore.setVisibility(View.GONE);
+
+        } else if (i1 == R.id.chat_more) {
+            if (mChatMoreVPager.getVisibility() == View.VISIBLE) {
+                mChatMoreVPager.setVisibility(View.GONE);
+                mMore.setVisibility(View.GONE);
+            } else {
+                mChatMoreVPager.setVisibility(View.VISIBLE);
+                mMore.setVisibility(View.VISIBLE);
+                mChatEmojiNormal.setVisibility(View.VISIBLE);
+                mChatEmojiChecked.setVisibility(View.GONE);
+                mChatFaceContainer.setVisibility(View.GONE);
+                mChatMoreContainer.setVisibility(View.VISIBLE);
+                mChatEmojiVPager.setVisibility(View.GONE);
+                hideKeyboard();
+            }
+
+        } else {
+
+        }
     }
 
     private void showVoice() {
@@ -1049,46 +1133,6 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
         mChatEmojiChecked.setVisibility(View.GONE);
         mChatMoreContainer.setVisibility(View.VISIBLE);
         mChatFaceContainer.setVisibility(View.GONE);
-    }
-
-    public void sendMsg(FromToMessage msg) {
-        FromToMessage fromToMessage = new FromToMessage();
-        fromToMessage.userType = "0";
-        fromToMessage.message = "";
-        fromToMessage.msgType = FromToMessage.MSG_TYPE_CARDINFO;
-        fromToMessage.when = System.currentTimeMillis();
-        fromToMessage.sessionId = IMChat.getInstance().getSessionId();
-        fromToMessage.tonotify = IMChat.getInstance().get_id();
-        fromToMessage.type = "User";
-        fromToMessage.from = IMChat.getInstance().get_id();
-        fromToMessage.cardInfo = msg.cardInfo;
-
-        //界面显示
-        descFromToMessage.add(fromToMessage);
-        chatAdapter.notifyDataSetChanged();
-        mChatList.setSelection(descFromToMessage.size());
-        mChatInput.setText("");
-        //发送消息
-        IMChat.getInstance().sendMessage(fromToMessage, new ChatListener() {
-            @Override
-            public void onSuccess() {
-                //消息发送成功
-                updateMessage();
-            }
-
-            @Override
-            public void onFailed() {
-                //消息发送失败
-                updateMessage();
-            }
-
-            @Override
-            public void onProgress(int progress) {
-
-            }
-        });
-
-
     }
 
     // 表情选择监听器
@@ -1229,10 +1273,8 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
         // 设置透明背景
         nullView1.setBackgroundColor(Color.TRANSPARENT);
         facePageViews.add(nullView1);
-
         // 中间添加表情页
         faceAdapters = new ArrayList<FaceAdapter>();
-
         for (int i = 0; i < emojis.size(); i++) {
             GridView view = new GridView(this);
             FaceAdapter adapter = new FaceAdapter(this, emojis.get(i));
@@ -1263,7 +1305,6 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
 
     // 初始化游标
     private void initEmojiPoint() {
-
         pointViewsFace = new ArrayList<ImageView>();
         ImageView imageView;
         for (int i = 0; i < facePageViews.size(); i++) {
@@ -1284,9 +1325,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
                 imageView.setBackgroundResource(R.drawable.kf_d2);
             }
             pointViewsFace.add(imageView);
-
         }
-
     }
 
     // 填充数据
@@ -1377,13 +1416,8 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
 
     // 打开本地相册
     public void openAlbum() {
-        Intent intent;
-        if (Build.VERSION.SDK_INT < 19) {
-            intent = new Intent(Intent.ACTION_GET_CONTENT);
-            intent.setType("image/*");
-        } else {
-            intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        }
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
         this.startActivityForResult(intent, PICK_IMAGE_ACTIVITY_REQUEST_CODE);
     }
 
@@ -1391,13 +1425,57 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
      * 打开评价对话框
      */
     private void openInvestigateDialog() {
-        if (IMChatManager.getInstance().getInvestigate().size() > 0) {
-            InvestigateDialog dialog = new InvestigateDialog();
-            dialog.show(getFragmentManager(), "InvestigateDialog");
+
+
+        if (isRobot) {
+            openRobotInvestigateDialog();
+
         } else {
-            ToastUtils.showShort("评价列表为空");
+            if (IMChatManager.getInstance().getInvestigate().size() > 0) {
+                InvestigateDialog dialog = new InvestigateDialog();
+                dialog.show(getFragmentManager(), "InvestigateDialog");
+            } else {
+                ToastUtils.showShort(R.string.nothing_evaluate);
+            }
         }
 
+    }
+
+    // 打开机器人评价
+
+    private void openRobotInvestigateDialog() {
+        final String[] items = new String[]{"已解决", "未解决", "取消"};
+
+        android.support.v7.app.AlertDialog builder = new android.support.v7.app.AlertDialog.Builder(ChatActivity.this)
+                .setTitle("评价机器人服务")
+
+                .setItems(items, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == 2) {
+                            return;
+                        } else {
+                            String solve = which == 0 ? "true" : "false";
+                            HttpManager.getRobotCsrInfo(IMChat.getInstance().getBotId(), solve, new HttpResponseListener() {
+                                @Override
+                                public void onSuccess(String responseStr) {
+                                    robotEvaluationFinish = true;
+                                    ToastUtils.showLong("机器人评价成功");
+                                    setChatMoreList();
+
+                                }
+
+                                @Override
+                                public void onFailed() {
+                                    robotEvaluationFinish = false;
+                                    ToastUtils.showLong("机器人评价失败");
+                                }
+                            });
+
+                        }
+                    }
+                }).create();
+        builder.show();
     }
 
     // 拍照回调
@@ -1408,7 +1486,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
             if (resultCode == RESULT_OK) {
                 Uri uri = data.getData();
                 if (uri != null) {
-                    String realPath = getRealPathFromURI(uri);
+                    String realPath = PickUtils.getPath(ChatActivity.this, uri);
                     picFileFullName = realPath;
                     Log.d("发送图片消息了", "图片的本地路径是：" + picFileFullName);
                     //准备发送图片消息
@@ -1418,6 +1496,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
                     descFromToMessage.addAll(fromTomsgs);
                     chatAdapter.notifyDataSetChanged();
                     mChatList.setSelection(descFromToMessage.size());
+                    resetBreakTimer();
                     IMChat.getInstance().sendMessage(fromToMessage, new ChatListener() {
                         @Override
                         public void onSuccess() {
@@ -1430,7 +1509,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
                         }
 
                         @Override
-                        public void onProgress(int p) {
+                        public void onProgress(int progress) {
 
                         }
                     });
@@ -1458,7 +1537,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
                     descFromToMessage.addAll(fromTomsgs);
                     chatAdapter.notifyDataSetChanged();
                     mChatList.setSelection(descFromToMessage.size());
-                    //resetBreakTimer();
+                    resetBreakTimer();
                     IMChat.getInstance().sendMessage(fromToMessage, new ChatListener() {
                         @Override
                         public void onSuccess() {
@@ -1516,11 +1595,29 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         unregisterReceiver(msgReceiver);
         unregisterReceiver(keFuStatusReceiver);
+        //解绑服务
+//        if (isServiceConnected) {
+//            unbindService(conn);
+//            isServiceConnected = false;
+//        }
         mRecorderButton.cancelListener();
-
+        if (break_timer != null) {
+            break_timer.cancel();
+            break_timer = null;
+        }
+        if (break_tip_timer != null) {
+            break_tip_timer.cancel();
+            break_tip_timer = null;
+        }
+        if (breakTimerTask != null) {
+            breakTimerTask.cancel();
+        }
+        if (breakTipTimerTask != null) {
+            breakTipTimerTask.cancel();
+        }
+        //删除卡片信息
         MessageDao.getInstance().delecteCardMsgs();
         EventBus.getDefault().unregister(this);
     }
@@ -1550,7 +1647,6 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
             }.start();
         }
     }
-
 
     /**
      * 新消息接收器,用来通知界面进行更新
@@ -1592,12 +1688,12 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
                     handler.sendMessage(queueMsg);
                 }
             } else if (IMChatManager.CLIAM_ACTION.equals(action)) {
-                //客服领取了会话
+                //客服领取了会话或者转人工
                 handler.sendEmptyMessage(HANDLER_CLIAM);
             } else if (IMChatManager.LEAVEMSG_ACTION.equals(action)) {
+                //schedule 跳留言
                 schedule_id = intent.getStringExtra(IMChatManager.CONSTANT_ID);
                 schedule_topeer = intent.getStringExtra(IMChatManager.CONSTANT_TOPEER);
-                //schedule 跳留言
                 handler.sendEmptyMessage(HANDLER_LEAVEMSG);
             } else if (IMChatManager.FINISH_ACTION.equals(action)) {
                 //客服关闭了会话
@@ -1609,195 +1705,130 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
                 String userName = intent.getStringExtra(IMChatManager.CONSTANT_USERNAME);
                 String userIcon = intent.getStringExtra(IMChatManager.CONSTANT_USERICON);
 
+                // 转人工
                 if ("claim".equals(type)) {
-                    mOtherName.setText(NullUtil.checkNull(userName) + "为您服务");
-                    titleName = NullUtil.checkNull(userName) + "为您服务";
+                    mOtherName.setText(NullUtil.checkNull(userName) + getString(R.string.seiveceforyou));
+                    titleName = NullUtil.checkNull(userName) + getString(R.string.seiveceforyou);
                 }
-                if ("claim".equals(type)) {
-                    mOtherName.setText(NullUtil.checkNull(userName) + "为您服务");
-                    titleName = NullUtil.checkNull(userName) + "为您服务";
+                // 坐席领取了会话
+                if ("activeClaim".equals(type)) {
+                    mOtherName.setText(NullUtil.checkNull(userName) + getString(R.string.seiveceforyou));
+                    titleName = NullUtil.checkNull(userName) + getString(R.string.seiveceforyou);
                 }
                 if ("redirect".equals(type)) {
-                    mOtherName.setText(NullUtil.checkNull(userName) + "为您服务");
-                    titleName = NullUtil.checkNull(userName) + "为您服务";
+                    mOtherName.setText(NullUtil.checkNull(userName) + getString(R.string.seiveceforyou));
+                    titleName = NullUtil.checkNull(userName) + getString(R.string.seiveceforyou);
                 }
                 if ("robot".equals(type)) {
-                    mOtherName.setText(NullUtil.checkNull(userName) + "为您服务");
-                    titleName = NullUtil.checkNull(userName) + "为您服务";
+                    mOtherName.setText(NullUtil.checkNull(userName) + getString(R.string.seiveceforyou));
+                    titleName = NullUtil.checkNull(userName) + getString(R.string.seiveceforyou);
                 }
             } else if (IMChatManager.VIPASSIGNFAIL_ACTION.equals(action)) {
                 //专属座席不在线
                 handler.sendEmptyMessage(HANDLER_VIPASSIGNFAIL);
+            } else if (IMChatManager.CANCEL_ROBOT_ACCESS_ACTION.equals(action)) {
+                //人工干预
+                Toast.makeText(ChatActivity.this, R.string.receivepeopleaction, Toast.LENGTH_SHORT).show();
+            } else if (IMChatManager.WITHDRAW_ACTION.equals(action)) {
+                //消息撤回
+                String id = intent.getStringExtra(IMChatManager.WITHDEAW_ID);
+                MessageDao.getInstance().updateMsgWithDrawStatus(id);
+                handler.sendEmptyMessage(HANDLER_MSG);
             } else if (IMChatManager.WRITING_ACTION.equals(action)) {
                 //对方正在输入
                 handler.sendEmptyMessage(HANDLER_WRITING);
                 handler.sendEmptyMessageDelayed(HANDLER_NO_WRITING, 5000);
-            } else if (IMChatManager.VIDEO_INVITED_ACTION.equals(action)) {
-                //接收到视频邀请
-                String username = intent.getStringExtra(IMChatManager.CONSTANT_VIDEO_USERNAME);
-                String roomname = intent.getStringExtra(IMChatManager.CONSTANT_VIDEO_ROOMNAME);
-                Intent videoIntent = new Intent(ChatActivity.this, InComingVideoActivity.class);
-                videoIntent.putExtra(IMChatManager.CONSTANT_VIDEO_USERNAME, username);
-                videoIntent.putExtra(IMChatManager.CONSTANT_VIDEO_ROOMNAME, roomname);
-                startActivity(videoIntent);
-            } else if (IMChatManager.CANCEL_VIDEO_ACTION.equals(action)) {
-                //取消发起视频
-                IMChatManager.getInstance().cancerlVideo();
+            } else if (IMChatManager.ROBOT_SWITCH_ACTION.equals(action)) {
+                //robotSwitch
+                String status = intent.getStringExtra(IMChatManager.CONSTANT_ROBOT_SWITCH);
+                String sessionId = intent.getStringExtra(IMChatManager.CONSTANT_SESSIONID);
+            } else if (IMChatManager.TCP_ACTION.equals(action)) {
+                //tcp状态
+                String tcpstatus = intent.getStringExtra(IMChatManager.TCPSTATUS);
+//            } else if (IMChatManager.UNASSIGN_ACTION.equals(action)){
+//                //开启 访客说话后再接入会话
+//                chat_tv_convert.setVisibility(View.GONE);
+            } else if (IMChatManager.M7BOTSATISFACTION_ACTION.equals(action)) {
+                isBotOpen = intent.getBooleanExtra(IMChatManager.botOpen, false);
             }
         }
+    }
+
+    private void setChatMoreList() {
+        moreList.clear();
+        moreList.add(chatMore2);
+        moreList.add(chatMore3);
+        //人工，开启了评价
+        if (!isRobot && IMChatManager.getInstance().isInvestigateOn()) {
+            if (!moreList.contains(chatMore4)) {
+                moreList.add(chatMore4);
+            }
+        }
+        // 如果是机器人，并且小陌机器人开启了评价，并且还未评价过,并且已经发送过消息
+        if (isRobot && IMChatManager.getInstance().isBotsatisfaOn && !robotEvaluationFinish && hasSendRobotMsg) {
+            if (!moreList.contains(chatMore4)) {
+                moreList.add(chatMore4);
+            }
+        }
+
+        //如果在排队
+        if (isQueue) {
+            if (moreList.contains(chatMore4)) {
+                moreList.remove(chatMore4);
+            }
+        }
+
+        //
+        moreLists.clear();
+        int pageCount = (int) Math.ceil(moreList.size() / 8 + 0.1);
+        for (int i = 0; i < pageCount; i++) {
+            moreLists.add(getData(i));
+        }
+        initMoreViewPager();
+        initMorePoint();
+        initMoreData();
     }
 
     private void beginSession(String peerId) {
         IMChatManager.getInstance().beginSession(peerId, new OnSessionBeginListener() {
-
             @Override
             public void onSuccess() {
+                setChatMoreList();
 
-                if (IMChatManager.getInstance().isInvestigateOn()) {
-                    //显示评价按钮
-                    moreList.clear();
-                    ChatMore chatMore2 = new ChatMore(2, R.drawable.kf_icon_chat_pic + "",
-                            "图库");
-                    ChatMore chatMore3 = new ChatMore(3, R.drawable.kf_icon_chat_file + "",
-                            "文件");
-                    ChatMore chatMore4 = new ChatMore(4, R.drawable.kf_icon_chat_investigate + "",
-                            "评价");
-
-                    moreList.add(chatMore2);
-                    moreList.add(chatMore3);
-                    moreList.add(chatMore4);
-
-
-                    GlobalSet globalSet = GlobalSetDao.getInstance().getGlobalSet();
-                    if ("1".equals(NullUtil.checkNull(globalSet.videoChatOn))) {
-                        ChatMore chatMore5 = new ChatMore(5, R.drawable.kf_icon_chat_video + "",
-                                "视频");
-                        moreList.add(chatMore5);
-                    }
-
-                    moreLists.clear();
-                    int pageCount = (int) Math.ceil(moreList.size() / 8 + 0.1);
-                    for (int i = 0; i < pageCount; i++) {
-                        moreLists.add(getData(i));
-                    }
-                    initMoreViewPager();
-                    initMorePoint();
-                    initMoreData();
-                } else {
-                    //隐藏评价按钮
-                    moreList.clear();
-                    ChatMore chatMore2 = new ChatMore(2, R.drawable.kf_icon_chat_pic + "",
-                            "图库");
-                    ChatMore chatMore3 = new ChatMore(3, R.drawable.kf_icon_chat_file + "",
-                            "文件");
-                    moreList.add(chatMore2);
-                    moreList.add(chatMore3);
-
-                    GlobalSet globalSet = GlobalSetDao.getInstance().getGlobalSet();
-                    if ("1".equals(NullUtil.checkNull(globalSet.videoChatOn))) {
-                        ChatMore chatMore5 = new ChatMore(5, R.drawable.kf_icon_chat_video + "",
-                                "视频");
-                        moreList.add(chatMore5);
-                    }
-
-                    moreLists.clear();
-                    int pageCount = (int) Math.ceil(moreList.size() / 8 + 0.1);
-                    for (int i = 0; i < pageCount; i++) {
-                        moreLists.add(getData(i));
-                    }
-                    initMoreViewPager();
-                    initMorePoint();
-                    initMoreData();
-                }
             }
 
             @Override
             public void onFailed() {
                 chat_tv_convert.setVisibility(View.GONE);
-                showOffineDialog();
+                showOffLineDialog();
             }
         });
     }
 
-    private void beginScheduleSession(String scheduleId, String processId, String currentNodeId) {
-        IMChatManager.getInstance().beginScheduleSession(scheduleId, processId, currentNodeId, new OnSessionBeginListener() {
+    private void beginScheduleSession(String scheduleId, String processId, String currentNodeId, String entranceId) {
+        IMChatManager.getInstance().beginScheduleSession(scheduleId, processId, currentNodeId, entranceId, new OnSessionBeginListener() {
 
             @Override
             public void onSuccess() {
+                setChatMoreList();
 
-                if (IMChatManager.getInstance().isInvestigateOn()) {
-                    //显示评价按钮
-                    moreList.clear();
-                    ChatMore chatMore2 = new ChatMore(2, R.drawable.kf_icon_chat_pic + "",
-                            "图库");
-                    ChatMore chatMore3 = new ChatMore(3, R.drawable.kf_icon_chat_file + "",
-                            "文件");
-                    ChatMore chatMore4 = new ChatMore(4, R.drawable.kf_icon_chat_investigate + "",
-                            "评价");
-
-                    moreList.add(chatMore2);
-                    moreList.add(chatMore3);
-                    moreList.add(chatMore4);
-
-
-                    GlobalSet globalSet = GlobalSetDao.getInstance().getGlobalSet();
-                    if ("1".equals(NullUtil.checkNull(globalSet.videoChatOn))) {
-                        ChatMore chatMore5 = new ChatMore(5, R.drawable.kf_icon_chat_video + "",
-                                "视频");
-                        moreList.add(chatMore5);
-                    }
-
-                    moreLists.clear();
-                    int pageCount = (int) Math.ceil(moreList.size() / 8 + 0.1);
-                    for (int i = 0; i < pageCount; i++) {
-                        moreLists.add(getData(i));
-                    }
-                    initMoreViewPager();
-                    initMorePoint();
-                    initMoreData();
-                } else {
-                    //隐藏评价按钮
-                    moreList.clear();
-                    ChatMore chatMore2 = new ChatMore(2, R.drawable.kf_icon_chat_pic + "",
-                            "图库");
-                    ChatMore chatMore3 = new ChatMore(3, R.drawable.kf_icon_chat_file + "",
-                            "文件");
-                    moreList.add(chatMore2);
-                    moreList.add(chatMore3);
-
-                    GlobalSet globalSet = GlobalSetDao.getInstance().getGlobalSet();
-                    if ("1".equals(NullUtil.checkNull(globalSet.videoChatOn))) {
-                        ChatMore chatMore5 = new ChatMore(5, R.drawable.kf_icon_chat_video + "",
-                                "视频");
-                        moreList.add(chatMore5);
-                    }
-
-                    moreLists.clear();
-                    int pageCount = (int) Math.ceil(moreList.size() / 8 + 0.1);
-                    for (int i = 0; i < pageCount; i++) {
-                        moreLists.add(getData(i));
-                    }
-                    initMoreViewPager();
-                    initMorePoint();
-                    initMoreData();
-                }
             }
 
             @Override
             public void onFailed() {
                 chat_tv_convert.setVisibility(View.GONE);
-                showOffineDialog();
+                showOffLineDialog();
             }
         });
     }
 
-    private void showOffineDialog() {
-        if (isRobot) {
-            bar_bottom.setVisibility(View.VISIBLE);
-        } else {
-            bar_bottom.setVisibility(View.GONE);
+    private void showOffLineDialog() {
+
+        if (type.equals("schedule")) {
+            return;
         }
         GlobalSet globalSet = GlobalSetDao.getInstance().getGlobalSet();
+
         if (null != globalSet) {
             if (isRobot) {
                 bar_bottom.setVisibility(View.VISIBLE);
@@ -1824,10 +1855,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
                         .setCancelable(false)
                         .create()
                         .show();
-
-
             }
-
         }
     }
 
@@ -1837,32 +1865,238 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
     }
 
     public void resendMsg(FromToMessage msg, int position) {
-        msg.sendState = "sending";
-        IMChat.getInstance().reSendMessage(msg, new ChatListener() {
+        if (IMChatManager.getInstance().isFinishWhenReConnect) {
+            startReStartDialog();
+        } else {
+            resetBreakTimer();
+            IMChat.getInstance().reSendMessage(msg, new ChatListener() {
+                @Override
+                public void onSuccess() {
+                    updateMessage();
+                }
+
+                @Override
+                public void onFailed() {
+                    updateMessage();
+                }
+
+                @Override
+                public void onProgress(int progress) {
+                    updateMessage();
+                }
+            });
+        }
+
+    }
+
+    public void sendMsg(FromToMessage msg) {
+        FromToMessage fromToMessage = new FromToMessage();
+        fromToMessage.userType = "0";
+        fromToMessage.message = "";
+        fromToMessage.msgType = FromToMessage.MSG_TYPE_CARDINFO;
+        fromToMessage.when = System.currentTimeMillis();
+        fromToMessage.sessionId = IMChat.getInstance().getSessionId();
+        fromToMessage.tonotify = IMChat.getInstance().get_id();
+        fromToMessage.type = "User";
+        fromToMessage.from = IMChat.getInstance().get_id();
+        fromToMessage.cardInfo = msg.cardInfo;
+
+        //界面显示
+        descFromToMessage.add(fromToMessage);
+        chatAdapter.notifyDataSetChanged();
+        mChatList.setSelection(descFromToMessage.size());
+        mChatInput.setText("");
+
+        resetBreakTimer();
+
+        //发送消息
+        IMChat.getInstance().sendMessage(fromToMessage, new ChatListener() {
             @Override
             public void onSuccess() {
+                //消息发送成功
                 updateMessage();
             }
 
             @Override
             public void onFailed() {
+                //消息发送失败
                 updateMessage();
             }
 
             @Override
-            public void onProgress(int p) {
-                updateMessage();
+            public void onProgress(int progress) {
+
+            }
+        });
+
+
+    }
+
+
+    private void getIsGoSchedule() {
+        IMChatManager.getInstance().getWebchatScheduleConfig(new GetGlobleConfigListen() {
+            @Override
+            public void getSchedule(ScheduleConfig sc) {
+                // loadingDialog.dismiss();
+                LogUtils.aTag("MainActivity", "日程");
+                if (!sc.getScheduleId().equals("") && !sc.getProcessId().equals("") && sc.getEntranceNode() != null && sc.getLeavemsgNodes() != null) {
+                    if (sc.getEntranceNode().getEntrances().size() > 0) {
+                        if (sc.getEntranceNode().getEntrances().size() == 1) {
+                            ScheduleConfig.EntranceNodeBean.EntrancesBean bean = sc.getEntranceNode().getEntrances().get(0);
+                            ChatActivity.startActivity(ChatActivity.this, Constants.TYPE_SCHEDULE, sc.getScheduleId(), sc.getProcessId(), bean.getProcessTo(), bean.getProcessType(), bean.get_id());
+                        } else {
+                            startScheduleDialog(sc.getEntranceNode().getEntrances(), sc.getScheduleId(), sc.getProcessId());
+                        }
+
+                    } else {
+                        ToastUtils.showShort(R.string.sorryconfigurationiswrong);
+                    }
+                } else {
+                    ToastUtils.showShort(R.string.sorryconfigurationiswrong);
+                }
+            }
+
+            @Override
+            public void getPeers() {
+                LogUtils.aTag("start", "技能组");
+                startChatActivityForPeer();
             }
         });
     }
+
+    private void startScheduleDialog(final List<ScheduleConfig.EntranceNodeBean.EntrancesBean> entrances, final String scheduleId, final String processId) {
+        final String[] items = new String[entrances.size()];
+        for (int i = 0; i < entrances.size(); i++) {
+            items[i] = entrances.get(i).getName();
+        }
+
+        android.support.v7.app.AlertDialog dialog = new android.support.v7.app.AlertDialog.Builder(ChatActivity.this)
+                .setTitle("选择日程")
+                // 设置列表显示，注意设置了列表显示就不要设置builder.setMessage()了，否则列表不起作用。
+                .setItems(items, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        ScheduleConfig.EntranceNodeBean.EntrancesBean bean = entrances.get(which);
+                        LogUtils.aTag("选择日程：", bean.getName());
+                        ChatActivity.startActivity(ChatActivity.this, Constants.TYPE_SCHEDULE, scheduleId, processId, bean.getProcessTo(), bean.getProcessType(), bean.get_id());
+
+                    }
+                }).create();
+        dialog.show();
+    }
+
+    private void startChatActivityForPeer() {
+        IMChatManager.getInstance().getPeers(new GetPeersListener() {
+            @Override
+            public void onSuccess(List<Peer> peers) {
+
+                if (peers.size() > 1) {
+                    startPeersDialog(peers, IMChatManager.getInstance().cardInfo);
+                } else if (peers.size() == 1) {
+                    ChatActivity.startActivity(ChatActivity.this, Constants.TYPE_PEER, peers.get(0).getId(), IMChatManager.getInstance().cardInfo);
+                } else {
+                    ToastUtils.showShort(R.string.peer_no_number);
+                }
+                // loadingDialog.dismiss();
+            }
+
+            @Override
+            public void onFailed() {
+                // loadingDialog.dismiss();
+            }
+        });
+    }
+
+    public void startPeersDialog(final List<Peer> peers, final CardInfo mCardInfo) {
+        final String[] items = new String[peers.size()];
+        for (int i = 0; i < peers.size(); i++) {
+            items[i] = peers.get(i).getName();
+        }
+        android.support.v7.app.AlertDialog builder = new android.support.v7.app.AlertDialog.Builder(ChatActivity.this)
+                .setTitle("选择技能组")
+                // 设置列表显示，注意设置了列表显示就不要设置builder.setMessage()了，否则列表不起作用。
+                .setItems(items, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                        Peer peer = peers.get(which);
+                        LogUtils.aTag("选择技能组：", peer.getName());
+                        ChatActivity.startActivity(ChatActivity.this, Constants.TYPE_PEER, peer.getId(), mCardInfo);
+                    }
+                }).create();
+        builder.show();
+    }
+
+    public void startReStartDialog() {
+        //设置聊天背景
+        new ActionSheetDialog(this)
+                .builder()
+                .setCancelable(true)
+                .setCanceledOnTouchOutside(true)
+                .setTitle("当前会话已经关闭,是否重新开启会话")
+                .addSheetItem(
+//                        this.getResources().getString(R.string.restartchat),
+                        "开始会话",
+                        ActionSheetDialog.SheetItemColor.Blue, new ActionSheetDialog.OnSheetItemClickListener() {
+                            @Override
+                            public void onClick(int which) {
+                                getIsGoSchedule();
+                            }
+                        })
+                .addSheetItem(
+//                        this.getResources().getString(R.string.exitchat),
+                        "退出",
+                        ActionSheetDialog.SheetItemColor.Blue, new ActionSheetDialog.OnSheetItemClickListener() {
+                            @Override
+                            public void onClick(int which) {
+                                IMChatManager.getInstance().quitSDk();
+                                finish();
+                            }
+                        }
+
+                ).show();
+    }
+
+    public void startReStartDialog2() {
+        singleButtonDialog = builder.setMessage("")
+                .setMessageDetail(codeDescription)
+                .setSingleButton("重新接入", 0xFF459ae9, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        singleButtonDialog.dismiss();
+                        IMChatManager.getInstance().quitSDk();
+                        finish();
+                    }
+                }).createSingleButtonDialog();
+        singleButtonDialog.show();
+    }
+
+    public void startReStartDialog3() {
+        singleButtonDialog = builder.setMessage("")
+                .setMessageDetail(codeDescription2)
+                .setSingleButton("退出", 0xFF459ae9, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        singleButtonDialog.dismiss();
+                        IMChatManager.getInstance().quitSDk();
+                        finish();
+                    }
+                }).createSingleButtonDialog();
+        singleButtonDialog.show();
+    }
+
 
     /**
      * 客服主动发起评价
      */
     private void sendInvestigate() {
-        ArrayList<Investigate> investigates = (ArrayList<Investigate>) IMChatManager.getInstance().getInvestigate();
-        IMMessage.createInvestigateMessage(investigates);
-        updateMessage();
+//        ArrayList<Investigate> investigates = (ArrayList<Investigate>) IMChatManager.getInstance().getInvestigate();
+//        IMMessage.createInvestigateMessage(investigates);
+//        updateMessage();
+
+        openInvestigateDialog();
+
     }
 
     public ChatListView getChatListView() {
@@ -1872,19 +2106,15 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
 
     @Override
     public void onRecordFinished(float mTime, String filePath, String pcmFilePath) {
-
         if (!FileUtils.isExists(filePath)) {
             ToastUtils.showShort("录音失败，请再次重试");
             return;
         }
-
         //先在界面上显示出来
         FromToMessage fromToMessage = IMMessage.createAudioMessage(mTime, filePath, "");
         descFromToMessage.add(fromToMessage);
         chatAdapter.notifyDataSetChanged();
         mChatList.setSelection(descFromToMessage.size());
-
-        //若不需要语音转文本，则可以直接调用sendVoiceMsg方法
         sendVoiceMsg("", fromToMessage);
     }
 
@@ -1895,6 +2125,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
      */
     private void sendVoiceMsg(String voiceText, FromToMessage fromToMessage) {
         fromToMessage.voiceText = voiceText;
+        resetBreakTimer();
         IMChat.getInstance().sendMessage(fromToMessage, new ChatListener() {
             @Override
             public void onSuccess() {
@@ -1907,25 +2138,77 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
             }
 
             @Override
-            public void onProgress(int p) {
+            public void onProgress(int progress) {
 
             }
         });
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        PermissionUtils.onRequestPermissionsResult(this, 0x11, new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE}, grantResults);
+        PermissionUtils.onRequestPermissionsResult(this, 0x11, new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE}, grantResults);
     }
 
     public void onEventMainThread(UnAssignEvent unAssignEvent) {
         chat_tv_convert.setVisibility(View.GONE);
     }
-    public void onEventMainThread(ReLoginSuccessEvent reLoginSuccessEvent) {
-        beginSession("");
+
+    public void onEventMainThread(ReSendMessage reSendMessage) {
+        updateMessage();
     }
 
+    /**
+     * 每次进入聊天页面重新校验tcp是否已经连接，未连接就重新连接一次
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+        LogUtils.aTag("chatActivity", "走到OnResume了" + TcpManager.getInstance(IMChatManager.getInstance().getAppContext()).getTcpStatus());
+        if (MoorUtils.isNetWorkConnected(IMChatManager.getInstance().getAppContext())) {
+            if (isServiceRunning(this, "com.moor.imkf.tcpservice.service.IMService")) {
+//                Toast.makeText(this, "服务活着呢", Toast.LENGTH_SHORT).show();
+                if (TcpManager.TcpStatus.BREAK.equals(TcpManager.getInstance(IMChatManager.getInstance().getAppContext()).getTcpStatus())) {
+                    EventBus.getDefault().post(new TcpBreakEvent());//重连
+                }
+            } else {
+                //服务挂了
+                    startReStartDialog2();
+//                if (TcpManager.TcpStatus.BREAK.equals(TcpManager.getInstance(IMChatManager.getInstance().getAppContext()).getTcpStatus())) {
+//                    //同时tcp也挂了，重启服务，执行重连
+                //绑定服务（重启）
+//                bindService(new Intent(this, IMService.class), conn, Context.BIND_AUTO_CREATE);
+//                EventBus.getDefault().post(new TcpBreakEvent());//重连
+//                }
+//                Toast.makeText(this, "服务挂了", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    /**
+     * 判断服务是否还活着
+     */
+
+    public static boolean isServiceRunning(Context context, String ServiceName) {
+        boolean isWork = false;
+        if (TextUtils.isEmpty(ServiceName)) {
+            isWork = false;
+        }
+        ActivityManager myManager = (ActivityManager) context
+                .getSystemService(Context.ACTIVITY_SERVICE);
+        ArrayList<ActivityManager.RunningServiceInfo> runningService = (ArrayList<ActivityManager.RunningServiceInfo>) myManager
+                .getRunningServices(200);
+        if (runningService.size() <= 0) {
+            isWork = false;
+        }
+        for (int i = 0; i < runningService.size(); i++) {
+            if (runningService.get(i).service.getClassName().toString()
+                    .equals(ServiceName)) {
+                isWork = true;
+                break;
+            }
+        }
+        return isWork;
+    }
 
 }

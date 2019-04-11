@@ -56,7 +56,7 @@ public class FileRxChatRow extends BaseChatRow {
                 if("success".equals(message.fileDownLoadStatus)) {
                     holder.getChat_content_pb_progress().setVisibility(View.GONE);
                     holder.getChat_content_tv_status().setVisibility(View.VISIBLE);
-                    holder.getChat_content_tv_status().setText("已下载");
+                    holder.getChat_content_tv_status().setText(R.string.haddownload);
                     holder.getChat_content_iv_download().setVisibility(View.GONE);
 
                     holder.getBaseView().setOnClickListener(new View.OnClickListener() {
@@ -67,7 +67,8 @@ public class FileRxChatRow extends BaseChatRow {
                                 File file = new File(message.filePath);
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                                     intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                    Uri contentUri = FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID + ".provider", file);
+                                    intent.setAction(Intent.ACTION_VIEW);
+                                    Uri contentUri = FileProvider.getUriForFile(context,  BuildConfig.APPLICATION_ID+".provider", file);
                                     intent.setDataAndType(contentUri,  MimeTypesTools.getMimeType(context, message.fileName));
                                 } else {
                                     intent.setDataAndType(Uri.fromFile(file),  MimeTypesTools.getMimeType(context, message.fileName));
@@ -76,6 +77,7 @@ public class FileRxChatRow extends BaseChatRow {
                                 context.startActivity(intent);
                             } catch (Exception e) {
                             }
+
                         }
                     });
                 }else if("failed".equals(message.fileDownLoadStatus)) {
@@ -85,7 +87,7 @@ public class FileRxChatRow extends BaseChatRow {
                 }else if("downloading".equals(message.fileDownLoadStatus)) {
                     holder.getChat_content_pb_progress().setVisibility(View.VISIBLE);
                     holder.getChat_content_tv_status().setVisibility(View.VISIBLE);
-                    holder.getChat_content_tv_status().setText("下载中...");
+                    holder.getChat_content_tv_status().setText(R.string.downloading);
                     holder.getChat_content_iv_download().setVisibility(View.GONE);
                 }
 
@@ -94,7 +96,7 @@ public class FileRxChatRow extends BaseChatRow {
                     public void onClick(View view) {
                         holder.getChat_content_pb_progress().setVisibility(View.VISIBLE);
                         holder.getChat_content_tv_status().setVisibility(View.VISIBLE);
-                        holder.getChat_content_tv_status().setText("下载中...");
+                        holder.getChat_content_tv_status().setText(R.string.downloading);
                         holder.getChat_content_iv_download().setVisibility(View.GONE);
 
                         IMChat.getInstance().downLoadFile(message, new FileMessageDownLoadListener() {

@@ -1,7 +1,6 @@
 package com.m7.imkfsdk.chat;
 
 import android.app.DialogFragment;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
@@ -11,9 +10,12 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.reactlibrary.R;
+import com.m7.imkfsdk.constant.Constants;
 import com.moor.imkf.IMChatManager;
 import com.moor.imkf.OnSessionBeginListener;
+import com.moor.imkf.model.entity.CardInfo;
 import com.moor.imkf.model.entity.Peer;
+import com.moor.imkf.utils.LogUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +28,7 @@ public class PeerDialog extends DialogFragment {
     private ListView investigateListView;
 
     private List<Peer> peers = new ArrayList<Peer>();
-
+    private CardInfo mCardInfo;
     private PeerAdapter adapter;
     private String type;
 
@@ -39,11 +41,16 @@ public class PeerDialog extends DialogFragment {
         getDialog().setCanceledOnTouchOutside(false);
 
         // Get the layout inflater
-        View view = inflater.inflate(R.layout.kf_dialog_investigate, null);
+        View view = inflater.inflate(R.layout.kf_dialog_common, null);
         investigateListView = (ListView) view.findViewById(R.id.investigate_list);
 
         Bundle bundle = getArguments();
         peers = (List<Peer>) bundle.getSerializable("Peers");
+
+        if(bundle.getSerializable("cardInfo")!=null){
+            mCardInfo = (CardInfo) bundle.getSerializable("cardInfo");
+        }
+
         type = bundle.getString("type");
 
         adapter = new PeerAdapter(getActivity(), peers);
@@ -56,10 +63,7 @@ public class PeerDialog extends DialogFragment {
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     dismiss();
                     Peer peer = (Peer) parent.getAdapter().getItem(position);
-                    Intent chatIntent = new Intent(getActivity(), ChatActivity.class);
-                    chatIntent.putExtra("PeerId", peer.getId());
-                    chatIntent.putExtra("type","peedId");
-                    startActivity(chatIntent);
+                    ChatActivity.startActivity(getActivity(), Constants.TYPE_PEER,peer.getId(),mCardInfo);
                 }
             });
         }else if("chat".equals(type)) {
@@ -68,6 +72,7 @@ public class PeerDialog extends DialogFragment {
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     dismiss();
                     Peer peer = (Peer) parent.getAdapter().getItem(position);
+                    LogUtils.aTag("beginSession","PeerDialog75行代码");
                     beginSession(peer.getId());
                 }
             });

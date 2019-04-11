@@ -38,7 +38,6 @@ public class DialogManager {
         textView = (TextView) view.findViewById(R.id.dialog_recorder_tv);
         mTimeTextView = (TextView) view.findViewById(R.id.dialog_recorder_tv_time);
         mDialog.show();
-        mDialog.setCanceledOnTouchOutside(false);
         isExceed = false;
     }
 

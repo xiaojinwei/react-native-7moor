@@ -16,8 +16,6 @@ import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.text.TextUtils;
 
-import com.moor.imkf.utils.LogUtil;
-
 import java.io.File;
 
 public class MediaPlayTools {
@@ -303,7 +301,6 @@ public class MediaPlayTools {
 
 			@Override
 			public void onCompletion(MediaPlayer mp) {
-				LogUtil.d(TAG, "[MediaPlayTools - setOnCompletionListener] Play file[" + urlPath + "] com");
 				status = STATUS_STOP;
 
 				if(mListener != null) {

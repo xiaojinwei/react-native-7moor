@@ -30,7 +30,7 @@ public class MoreAdapter extends BaseAdapter {
 	private Handler handler;
 
 	public MoreAdapter(Context context, List<ChatMore> chatMoreList,
-                       Handler handler) {
+					   Handler handler) {
 		this.inflater = LayoutInflater.from(context);
 		this.chatMoreList = chatMoreList;
 		this.size = chatMoreList.size();

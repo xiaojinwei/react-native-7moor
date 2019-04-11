@@ -6,7 +6,7 @@
     <string name="recorder_recording">松开 手指</string>
     <string name="recorder_want_cancel">松开手指，取消发送</string>
     <string name="investigate">请您对本次服务做出评价, 点击对应选项即可完成评价</string>
-    <string name="logout">注销</string>
+    <string name="logout">返回</string>
     <string name="topeople">转人工</string>
     <string name="send">发送</string>
     <string name="numbers01">当前咨询人数较多,你排在第</string>
@@ -22,7 +22,6 @@
     <string name="content">内容</string>
     <string name="nohelp">没帮助</string>
     <string name="yeshelp">有帮助</string>
-    <string name="thinks">多谢鼓励，我们再接再厉</string>
     <string name="close">关闭</string>
     <string name="leavemsg">留言板</string>
     <string name="pleaseleavemsg">请留言~</string>
@@ -58,8 +57,8 @@
     <string name="seiveceforyou">为您服务</string>
     <string name="receivepeopleaction">接收到人工干预</string>
     <string name="iknow">我知道了</string>
-    <string name="thinks_01">多谢鼓励，我们再接再厉！</string>
-    <string name="thinks_02">感谢反馈，我们继续努力。</string>
+    <string name="thinks_01">很高兴为您解决了问题！</string>
+    <string name="thinks_02">非常抱歉没有解决您的问题！</string>
     <string name="url_failure">链接不正确！</string>
     <string name="evaluate_succeed">评价成功</string>
     <string name="haddownload">已下载</string>
@@ -74,5 +73,4 @@
     <string name="satisfy_title" translatable="false">感谢您使用我们的服务，请为此次服务评价！</string>
     <string name="satisfy_thank" translatable="false">感谢您对此次服务做出评价，祝您生活愉快，再见！</string>
     <string name="wait_link">等待接入</string>
-
 </resources>

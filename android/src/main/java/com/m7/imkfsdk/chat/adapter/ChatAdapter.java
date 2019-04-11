@@ -7,8 +7,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
+import com.reactlibrary.R;
 import com.m7.imkfsdk.chat.ChatActivity;
 import com.m7.imkfsdk.chat.chatrow.BaseChatRow;
+import com.m7.imkfsdk.chat.chatrow.BreakTipChatRow;
 import com.m7.imkfsdk.chat.chatrow.CardRxChatBox;
 import com.m7.imkfsdk.chat.chatrow.ChatRowType;
 import com.m7.imkfsdk.chat.chatrow.ChatRowUtils;
@@ -23,8 +25,7 @@ import com.m7.imkfsdk.chat.chatrow.RichRxChatBow;
 import com.m7.imkfsdk.chat.chatrow.RichTxChatBox;
 import com.m7.imkfsdk.chat.chatrow.TextRxChatRow;
 import com.m7.imkfsdk.chat.chatrow.TextTxChatRow;
-import com.m7.imkfsdk.chat.chatrow.VideoRxChatRow;
-import com.m7.imkfsdk.chat.chatrow.VideoTxChatRow;
+import com.m7.imkfsdk.chat.chatrow.TripRxChatRow;
 import com.m7.imkfsdk.chat.chatrow.VoiceRxChatRow;
 import com.m7.imkfsdk.chat.chatrow.VoiceTxChatRow;
 import com.m7.imkfsdk.chat.holder.BaseHolder;
@@ -37,7 +38,19 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Created by longwei on 2016/3/9.
+ * <p>
+ * Package Name:com.m7.imkfsdk.chat.adapter
+ * </p>
+ * <p>
+ * Class Name:ChatAdapter
+ * <p>
+ * Description:
+ * </p>
+ *
+ * @Author  longwei
+ * @Version 1.0 2016/3/9 Release
+ * @Reviser: Martin
+ * @Modification Time:2018/11/19 3:24 PM
  */
 public class ChatAdapter extends BaseAdapter {
 
@@ -69,11 +82,12 @@ public class ChatAdapter extends BaseAdapter {
         chatRowHashMap.put(Integer.valueOf(8), new FileRxChatRow(8));
         chatRowHashMap.put(Integer.valueOf(9), new FileTxChatRow(9));
         chatRowHashMap.put(Integer.valueOf(10), new IframeRxChatRow(10));
-        chatRowHashMap.put(Integer.valueOf(11), new VideoRxChatRow(11));
-        chatRowHashMap.put(Integer.valueOf(12), new VideoTxChatRow(12));
+        chatRowHashMap.put(Integer.valueOf(11), new BreakTipChatRow(11));
+        chatRowHashMap.put(Integer.valueOf(12), new TripRxChatRow(12));
         chatRowHashMap.put(Integer.valueOf(13), new RichRxChatBow(13));
         chatRowHashMap.put(Integer.valueOf(14), new RichTxChatBox(14));
         chatRowHashMap.put(Integer.valueOf(15), new CardRxChatBox(15));
+
     }
 
     public void setVoicePosition(int position) {
@@ -86,7 +100,7 @@ public class ChatAdapter extends BaseAdapter {
     }
 
     @Override
-    public FromToMessage getItem(int position) {
+    public synchronized FromToMessage getItem(int position) {
         return messageList.get(position);
     }
 
@@ -97,7 +111,7 @@ public class ChatAdapter extends BaseAdapter {
 
     //根据该条消息获得类型的数字(在枚举类型中的ordinal)
     @Override
-    public int getItemViewType(int position) {
+    public synchronized int getItemViewType(int position) {
         FromToMessage message = getItem(position);
         int type = getBaseChatRow(ChatRowUtils.getChattingMessageType(message), message.userType.equals("0")).getChatViewType();
         return type;
@@ -117,6 +131,7 @@ public class ChatAdapter extends BaseAdapter {
         if(message == null) {
             return null;
         }
+
 
         //构建消息的view
         Integer messageType = ChatRowUtils.getChattingMessageType(message);
@@ -138,9 +153,9 @@ public class ChatAdapter extends BaseAdapter {
 
         if(showTimer) {
             baseHolder.getChattingTime().setVisibility(View.VISIBLE);
-//            baseHolder.getChattingTime().setBackgroundResource(R.drawable.kf_chat_tips_bg);
             baseHolder.getChattingTime().setText(DateUtil.getDateString(message.when, DateUtil.SHOW_TYPE_CALL_LOG).trim());
             baseHolder.getChattingTime().setTextColor(Color.WHITE);
+            baseHolder.getChattingTime().setBackgroundResource(R.color.lightgrey);
             baseHolder.getChattingTime().setPadding(6, 2, 6, 2);
         } else {
             baseHolder.getChattingTime().setVisibility(View.GONE);

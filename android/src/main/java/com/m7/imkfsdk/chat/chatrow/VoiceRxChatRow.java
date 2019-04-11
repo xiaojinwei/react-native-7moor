@@ -10,6 +10,7 @@ import com.reactlibrary.R;
 import com.m7.imkfsdk.chat.ChatActivity;
 import com.m7.imkfsdk.chat.holder.BaseHolder;
 import com.m7.imkfsdk.chat.holder.VoiceViewHolder;
+import com.moor.imkf.db.dao.MessageDao;
 import com.moor.imkf.http.FileDownLoadListener;
 import com.moor.imkf.http.HttpManager;
 import com.moor.imkf.model.entity.FromToMessage;
@@ -36,10 +37,10 @@ public class VoiceRxChatRow extends BaseChatRow {
         final VoiceViewHolder holder = (VoiceViewHolder) baseHolder;
         final FromToMessage message = detail;
         if (message != null) {
-            if (message.unread != null && message.unread.equals("1")) {
+            if (message.unread2 != null && message.unread2.equals("1")) {
                 ((VoiceViewHolder) baseHolder).voiceUnread.setVisibility(View.VISIBLE);
             } else {
-                ((VoiceViewHolder) baseHolder).voiceUnread.setVisibility(View.INVISIBLE);
+                ((VoiceViewHolder) baseHolder).voiceUnread.setVisibility(View.GONE);
             }
             if (message.filePath == null || message.filePath.equals("")) {
                 String dirStr = Environment.getExternalStorageDirectory() + File.separator + "cc/downloadfile/";
@@ -52,6 +53,7 @@ public class VoiceRxChatRow extends BaseChatRow {
                 if (file.exists()) {
                     file.delete();
                 }
+
                 message.message = message.message.replaceAll("https://", "http://");
 
                 HttpManager.downloadFile(message.message, file, new FileDownLoadListener() {
@@ -59,6 +61,7 @@ public class VoiceRxChatRow extends BaseChatRow {
                     public void onSuccess(File file) {
                         String filePath = file.getAbsolutePath();
                         message.filePath = filePath;
+                        MessageDao.getInstance().updateMsgToDao(message);
                         VoiceViewHolder.initVoiceRow(holder, detail, position, (ChatActivity) context, true);
                     }
 

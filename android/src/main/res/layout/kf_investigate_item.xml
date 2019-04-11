@@ -20,5 +20,5 @@
         android:layout_gravity="center_vertical"
         android:textColor="@color/grey"
         android:textSize="18sp"
-        android:text="好评"/>
+        android:text="@string/good"/>
 </LinearLayout>

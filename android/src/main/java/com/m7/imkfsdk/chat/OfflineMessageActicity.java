@@ -66,13 +66,11 @@ public class OfflineMessageActicity extends Activity{
             id_et_content.setHint("请留言");
         }
 
-
         if(inviteLeavemsgTip != null && !"".equals(inviteLeavemsgTip)) {
             inviteLeavemsgTipTv.setText(inviteLeavemsgTip);
         } else {
             inviteLeavemsgTipTv.setText("请留言，我们将尽快联系您");
         }
-
 
         IMChatManager.getInstance().getLeaveMsgConfig(new OnLeaveMsgConfigListener() {
             @Override
@@ -127,22 +125,22 @@ public class OfflineMessageActicity extends Activity{
                 }
 
                 if(!"".equals(content)) {
-                    loadingFragmentDialog.show(getFragmentManager(), "");
-                    IMChatManager.getInstance().submitOfflineMessage(peerId, content, datas, lmfList, new OnSubmitOfflineMessageListener() {
-                        @Override
-                        public void onSuccess() {
-                            loadingFragmentDialog.dismiss();
-                            Toast.makeText(OfflineMessageActicity.this, "提交留言成功", Toast.LENGTH_SHORT).show();
-                            finish();
-                        }
+                        loadingFragmentDialog.show(getFragmentManager(), "");
+                        IMChatManager.getInstance().submitOfflineMessage(peerId, content, datas, lmfList, new OnSubmitOfflineMessageListener() {
+                            @Override
+                            public void onSuccess() {
+                                loadingFragmentDialog.dismiss();
+                                Toast.makeText(OfflineMessageActicity.this, "提交留言成功", Toast.LENGTH_SHORT).show();
+                                finish();
+                            }
 
-                        @Override
-                        public void onFailed() {
-                            loadingFragmentDialog.dismiss();
-                            Toast.makeText(OfflineMessageActicity.this, "提交留言失败", Toast.LENGTH_SHORT).show();
-                            finish();
-                        }
-                    });
+                            @Override
+                            public void onFailed() {
+                                loadingFragmentDialog.dismiss();
+                                Toast.makeText(OfflineMessageActicity.this, "提交留言失败", Toast.LENGTH_SHORT).show();
+                                finish();
+                            }
+                        });
 
                 }else {
                     Toast.makeText(OfflineMessageActicity.this, "请输入内容", Toast.LENGTH_SHORT).show();

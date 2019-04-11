@@ -38,7 +38,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="8dp"
             android:layout_toLeftOf="@id/chatting_avatar_iv"
-            android:text=""
+            android:text="@string/name"
             android:textColor="@color/all_black"
             android:textSize="10sp"
             android:visibility="gone"
@@ -87,7 +87,7 @@
                         android:layout_marginRight="5dp"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text=""
+                        android:text="@string/titlename"
                         android:textColor="@color/all_black"
                         android:textSize="16sp"
                         />
@@ -102,7 +102,7 @@
                         android:layout_weight="1"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text=""
+                        android:text="@string/content"
                         android:textColor="@color/grey"
                         android:textSize="12sp"
                         />
@@ -117,8 +117,8 @@
                         android:layout_weight="1"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text=""
-                        android:textColor="#ff6b6b"
+                        android:text="@string/content"
+                        android:textColor="@color/tv_red"
                         android:textSize="14sp"
                         />
 
@@ -161,7 +161,7 @@
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
         android:paddingTop="4dp"
-        android:text="对方撤回了一条消息"
+        android:text="@string/writedrown_msg"
         android:textSize="12sp"
         android:visibility="gone"/>
 
