@@ -79,7 +79,9 @@ public class RNSevenMoorModule extends ReactContextBaseJavaModule {
         try {
 
 
-
+	if (helper == null){
+            helper = new KfStartHelper(reactContext.getCurrentActivity());
+        }
 //            final KfStartHelper helper = new KfStartHelper(reactContext.getCurrentActivity());
 //            helper.setSaveMsgType(1);
 //            helper.startKFService(key, userName, userId);
