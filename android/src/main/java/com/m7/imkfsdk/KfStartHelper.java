@@ -40,6 +40,7 @@ public class KfStartHelper {
     private String userId;
 
     private Boolean isOpenChat = false;
+    private static KfStartHelper kfStartHelper = null;
 
     public void setCard(CardInfo card) {
         this.card = card;
@@ -52,6 +53,17 @@ public class KfStartHelper {
         loadingDialog = new LoadingFragmentDialog();
         MoorUtils.init(activity.getApplication());
         initFaceUtils();
+    }
+
+    public static KfStartHelper getInstance(Activity activity) {
+        if (kfStartHelper == null) {
+            synchronized (KfStartHelper.class) {
+                if (kfStartHelper == null) {
+                    return kfStartHelper = new KfStartHelper(activity);
+                }
+            }
+        }
+        return kfStartHelper;
     }
 
     /**
@@ -70,7 +82,7 @@ public class KfStartHelper {
     }
 
     public void initSdkChat(String accessId, String userName,
-                            String userId,Boolean isOpenChat) {
+                            String userId, Boolean isOpenChat) {
         this.accessId = accessId;
         this.userName = userName;
         this.userId = userId;
@@ -88,7 +100,7 @@ public class KfStartHelper {
     }
 
     private void getIsGoSchedule() {
-        if (!isOpenChat){
+        if (!isOpenChat) {
             loadingDialog.dismiss();
             return;
         }
@@ -188,12 +200,13 @@ public class KfStartHelper {
                         Log.d("MainActivity", "sdk初始化失败, 请填写正确的accessid");
                     }
                 });
-                Log.d("KfStartHelper", "context："+context);
+                Log.d("KfStartHelper", "context：" + context);
                 IMChatManager.getInstance().init(context, receiverAction, accessId, userName, userId);
             }
         }.start();
     }
-    public void startKFService(final String accessId,final String userName,
+
+    public void startKFService(final String accessId, final String userName,
                                final String userId) {
         this.accessId = accessId;
         this.userName = userName;
