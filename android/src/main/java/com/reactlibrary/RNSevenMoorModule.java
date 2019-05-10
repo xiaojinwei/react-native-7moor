@@ -18,6 +18,7 @@ import com.m7.imkfsdk.KfStartHelper;
 import com.m7.imkfsdk.MainActivity;
 import com.m7.imkfsdk.utils.PermissionUtils;
 import com.moor.imkf.IMChatManager;
+import com.moor.imkf.utils.MoorUtils;
 
 public class RNSevenMoorModule extends ReactContextBaseJavaModule {
 
@@ -38,7 +39,7 @@ public class RNSevenMoorModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void registerSDK(String key, String userName, String userId) {
 //        Toast.makeText(reactContext.getCurrentActivity(),"key:"+key+"--userName:"+userName+"--userId:"+userId, Toast.LENGTH_SHORT).show();
-
+        IMChatManager.getInstance().quitSDk();
         if (helper == null) {
             helper = KfStartHelper.getInstance(reactContext.getCurrentActivity());
         }
@@ -79,20 +80,19 @@ public class RNSevenMoorModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void sdkGetUnReadMessage(String key, String userName, String userId, final Promise promise) {
         try {
+            if (MoorUtils.isInitForUnread(reactContext.getCurrentActivity())) {
+                IMChatManager.getInstance().getMsgUnReadCountFromService(new IMChatManager.HttpUnReadListen() {
+                    @Override
+                    public void getUnRead(int acount) {
+//                        Toast.makeText(reactContext.getCurrentActivity(), "未读消息数为：" + acount, Toast.LENGTH_SHORT).show();
 
-
-            if (helper == null) {
-                helper = KfStartHelper.getInstance(reactContext.getCurrentActivity());
+                        promise.resolve(acount);
+                    }
+                });
             }
-//            final KfStartHelper helper = new KfStartHelper(reactContext.getCurrentActivity());
-//            helper.setSaveMsgType(1);
-//            helper.startKFService(key, userName, userId);
-            helper.initSdkChat(key, userName, userId, false);
+//            Log.d("KfStartHelper Message", "key:" + key + "--userName:" + userName + "---userId:" + userId + "--unReadCount：" + unReadCount);
 
-            int unReadCount = IMChatManager.getInstance().getMsgUnReadCount();
-            Log.d("KfStartHelper Message", "key:" + key + "--userName:" + userName + "---userId:" + userId + "--unReadCount：" + unReadCount);
-
-            promise.resolve(unReadCount);
+//            promise.resolve(unReadCount);
 
         } catch (Exception e) {
             promise.reject("1", e.getMessage());
