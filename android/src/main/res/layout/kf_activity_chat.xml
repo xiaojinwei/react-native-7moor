@@ -196,7 +196,7 @@
                 android:orientation="vertical"
                 android:visibility="visible" >
 
-                <android.support.v4.view.ViewPager
+                <androidx.viewpager.widget.ViewPager
                     android:id="@+id/chat_emoji_vPager"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
@@ -219,7 +219,7 @@
                 android:orientation="vertical"
                 android:visibility="visible" >
 
-                <android.support.v4.view.ViewPager
+                <androidx.viewpager.widget.ViewPager
                     android:id="@+id/chat_more_vPager"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

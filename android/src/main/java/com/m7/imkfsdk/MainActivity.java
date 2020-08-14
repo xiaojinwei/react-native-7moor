@@ -7,10 +7,11 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.Window;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 
 import com.m7.imkfsdk.utils.PermissionUtils;
 import com.moor.imkf.IMChatManager;

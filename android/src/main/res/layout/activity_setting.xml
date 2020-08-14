@@ -43,7 +43,7 @@
             />
     </RadioGroup>
 
-    <android.support.v7.widget.AppCompatEditText
+    <androidx.appcompat.widget.AppCompatEditText
         android:id="@+id/setting_accessid"
         android:layout_width="match_parent"
         android:layout_height="50dp"

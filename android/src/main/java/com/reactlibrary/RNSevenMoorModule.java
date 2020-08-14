@@ -2,6 +2,7 @@
 package com.reactlibrary;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -20,6 +21,8 @@ import com.m7.imkfsdk.utils.PermissionUtils;
 import com.moor.imkf.IMChatManager;
 import com.moor.imkf.utils.MoorUtils;
 
+import java.lang.reflect.Method;
+
 public class RNSevenMoorModule extends ReactContextBaseJavaModule {
 
     private final ReactApplicationContext reactContext;
@@ -29,6 +32,18 @@ public class RNSevenMoorModule extends ReactContextBaseJavaModule {
     public RNSevenMoorModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
+    }
+
+    private Activity getReactContextCurrentActivity(ReactApplicationContext reactContext){
+        try {
+            Class<? extends ReactApplicationContext> aClass = reactContext.getClass();
+            Method getCurrentActivity = aClass.getMethod("getCurrentActivity");
+            Object invoke = getCurrentActivity.invoke(reactContext);
+            return (Activity)invoke;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
@@ -41,7 +56,7 @@ public class RNSevenMoorModule extends ReactContextBaseJavaModule {
 //        Toast.makeText(reactContext.getCurrentActivity(),"key:"+key+"--userName:"+userName+"--userId:"+userId, Toast.LENGTH_SHORT).show();
         IMChatManager.getInstance().quitSDk();
         if (helper == null) {
-            helper = KfStartHelper.getInstance(reactContext.getCurrentActivity());
+            helper = KfStartHelper.getInstance(getReactContextCurrentActivity(reactContext));
         }
 
         /**
@@ -49,20 +64,20 @@ public class RNSevenMoorModule extends ReactContextBaseJavaModule {
          * 读取设备 ID 权限 （初始化需要获取用户的设备 ID）
          */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (PermissionUtils.hasAlwaysDeniedPermission(reactContext.getCurrentActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            if (PermissionUtils.hasAlwaysDeniedPermission(getReactContextCurrentActivity(reactContext), Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_EXTERNAL_STORAGE)) {
 
-                PermissionUtils.requestPermissions(reactContext.getCurrentActivity(), 0x11, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_EXTERNAL_STORAGE}, new PermissionUtils.OnPermissionListener() {
+                PermissionUtils.requestPermissions(getReactContextCurrentActivity(reactContext), 0x11, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_EXTERNAL_STORAGE}, new PermissionUtils.OnPermissionListener() {
                     @Override
                     public void onPermissionGranted() {
                     }
 
                     @Override
                     public void onPermissionDenied(String[] deniedPermissions) {
-                        Toast.makeText(reactContext.getCurrentActivity(), "权限不够", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getReactContextCurrentActivity(reactContext), "权限不够", Toast.LENGTH_SHORT).show();
                         new Handler().postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                reactContext.getCurrentActivity().finish();
+                                getReactContextCurrentActivity(reactContext).finish();
                             }
                         }, 2000);
                     }
@@ -80,7 +95,7 @@ public class RNSevenMoorModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void sdkGetUnReadMessage(String key, String userName, String userId, final Promise promise) {
         try {
-            if (MoorUtils.isInitForUnread(reactContext.getCurrentActivity())) {
+            if (MoorUtils.isInitForUnread(getReactContextCurrentActivity(reactContext))) {
                 IMChatManager.getInstance().getMsgUnReadCountFromService(new IMChatManager.HttpUnReadListen() {
                     @Override
                     public void getUnRead(int acount) {

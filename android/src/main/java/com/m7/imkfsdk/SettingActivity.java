@@ -2,12 +2,13 @@ package com.m7.imkfsdk;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.Toast;
+
+import androidx.annotation.Nullable;
 
 import com.moor.imkf.requesturl.RequestUrl;
 import com.reactlibrary.R;

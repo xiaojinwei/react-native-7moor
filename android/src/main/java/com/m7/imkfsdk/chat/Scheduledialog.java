@@ -2,12 +2,13 @@ package com.m7.imkfsdk.chat;
 
 import android.app.DialogFragment;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+
+import androidx.annotation.NonNull;
 
 import com.reactlibrary.R;
 import com.m7.imkfsdk.constant.Constants;

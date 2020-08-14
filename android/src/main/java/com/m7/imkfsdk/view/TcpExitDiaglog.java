@@ -2,12 +2,13 @@ package com.m7.imkfsdk.view;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.support.annotation.NonNull;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
 
 import com.reactlibrary.R;
 

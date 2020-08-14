@@ -6,12 +6,10 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -19,18 +17,15 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.ViewPager;
-import android.support.v4.view.ViewPager.OnPageChangeListener;
+
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.viewpager.widget.ViewPager;
+
 import android.text.Editable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -98,8 +93,6 @@ import com.moor.imkf.model.entity.ScheduleConfig;
 import com.moor.imkf.tcpservice.event.ReSendMessage;
 import com.moor.imkf.tcpservice.event.TcpBreakEvent;
 import com.moor.imkf.tcpservice.event.UnAssignEvent;
-import com.moor.imkf.tcpservice.logger.Logger;
-import com.moor.imkf.tcpservice.service.IMService;
 import com.moor.imkf.tcpservice.service.TcpManager;
 import com.moor.imkf.utils.LogUtils;
 import com.moor.imkf.utils.MoorUtils;
@@ -1219,7 +1212,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
 
         mChatMoreVPager.setCurrentItem(1);
         current = 0;
-        mChatMoreVPager.setOnPageChangeListener(new OnPageChangeListener() {
+        mChatMoreVPager.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
 
             @Override
             public void onPageSelected(int arg0) {
@@ -1334,7 +1327,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
 
         mChatEmojiVPager.setCurrentItem(1);
         current = 0;
-        mChatEmojiVPager.setOnPageChangeListener(new OnPageChangeListener() {
+        mChatEmojiVPager.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
 
             @Override
             public void onPageSelected(int arg0) {
@@ -1446,7 +1439,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
     private void openRobotInvestigateDialog() {
         final String[] items = new String[]{"已解决", "未解决", "取消"};
 
-        android.support.v7.app.AlertDialog builder = new android.support.v7.app.AlertDialog.Builder(ChatActivity.this)
+        AlertDialog builder = new AlertDialog.Builder(ChatActivity.this)
                 .setTitle("评价机器人服务")
 
                 .setItems(items, new DialogInterface.OnClickListener() {
@@ -1970,7 +1963,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
             items[i] = entrances.get(i).getName();
         }
 
-        android.support.v7.app.AlertDialog dialog = new android.support.v7.app.AlertDialog.Builder(ChatActivity.this)
+        AlertDialog dialog = new AlertDialog.Builder(ChatActivity.this)
                 .setTitle("选择日程")
                 // 设置列表显示，注意设置了列表显示就不要设置builder.setMessage()了，否则列表不起作用。
                 .setItems(items, new DialogInterface.OnClickListener() {
@@ -2013,7 +2006,7 @@ public class ChatActivity extends MyBaseActivity implements OnClickListener,
         for (int i = 0; i < peers.size(); i++) {
             items[i] = peers.get(i).getName();
         }
-        android.support.v7.app.AlertDialog builder = new android.support.v7.app.AlertDialog.Builder(ChatActivity.this)
+        AlertDialog builder = new AlertDialog.Builder(ChatActivity.this)
                 .setTitle("选择技能组")
                 // 设置列表显示，注意设置了列表显示就不要设置builder.setMessage()了，否则列表不起作用。
                 .setItems(items, new DialogInterface.OnClickListener() {
